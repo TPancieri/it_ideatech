@@ -2,9 +2,8 @@ FROM php:8.2-apache
 
 # Dependencies
 RUN apt-get update && \
-    apt-get install -y \
-    libzip-dev \
-    zip
+    libpq-dev \ 
+    && docker-php-ext-install pdo pdo_pgsql
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
@@ -17,7 +16,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Copy the application code
-COPY . /var/www/html
+COPY . .
 
 # Set the working directory
 WORKDIR /var/www/html
@@ -30,3 +29,5 @@ RUN composer install
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+CMD php artisan serve --host=0.0.0.0 --port=8000
