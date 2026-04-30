@@ -1,7 +1,7 @@
 services:
   laravelapp:
     container_name: laravelapp
-    image: thiago/laravelapp:l.0.0
+    image: thiago/laravelapp:l.0.1
     build: .
     ports:
       - "8000:8000"
@@ -14,7 +14,7 @@ services:
     container_name: db
     image: postgres:15
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
