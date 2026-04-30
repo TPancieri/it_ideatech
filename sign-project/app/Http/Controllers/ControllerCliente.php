@@ -9,8 +9,8 @@ class ControllerCliente extends Controller
 {
     public function index()
     {// retornando um .json
-    $clientes = Cliente::all();
-    return response()->json($clientes);}
+    $cliente = Cliente::all();
+    return response()->json($cliente);}
 
     public function store(Request $request)
     {
@@ -19,30 +19,30 @@ class ControllerCliente extends Controller
             'email' => 'required|string' 
         ]);
 
-        $clientes = Cliente::create($request->all());
-        return response()->json($clientes);
+        $cliente = Cliente::create($request->all());
+        return response()->json($cliente);
     }
 
-    public function show(Cliente $clientes)
+    public function show(Cliente $cliente)
     {
-        return response()->json($clientes);
+        return response()->json($cliente);
     }
 
-    public function update(Request $request, Cliente $clientes)
+    public function update(Request $request, Cliente $cliente)
     {
         $validatedData = $request ->validate([
             'nome' => 'required|string',
             'email' => 'required|string' 
         ]);
 
-        $clientes ->update($validatedData);
+        $cliente ->update($validatedData);
 
-        return response()->json($clientes);
+        return response()->json($cliente);
     }
 
-    public function destroy (Cliente $clientes)
+    public function destroy (Cliente $cliente)
     {
-        $clientes->delete();
+        $cliente->delete();
         return response()->json(null);
     }
 }

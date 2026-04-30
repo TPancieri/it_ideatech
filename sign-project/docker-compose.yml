@@ -1,7 +1,7 @@
 services:
   laravelapp:
     container_name: laravelapp
-    image: thiago/laravelapp:l.0.1
+    image: thiago/laravelapp:l.0.4
     build: .
     ports:
       - "8000:8000"

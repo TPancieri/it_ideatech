@@ -10,6 +10,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request){
 
 Route::get( '/clientes', [ControllerCliente::class, 'index']);
 Route::post( '/clientes', [ControllerCliente::class, 'store']);
-Route::get( '/clientes', [ControllerCliente::class, 'show']);
-Route::put( '/clientes', [ControllerCliente::class, 'update']);
-Route::delete( '/clientes', [ControllerCliente::class, 'destroy']);
+Route::get( '/clientes/{cliente}', [ControllerCliente::class, 'show']);
+Route::put( '/clientes/{cliente}', [ControllerCliente::class, 'update']);
+Route::delete( '/clientes/{cliente}', [ControllerCliente::class, 'destroy']);
