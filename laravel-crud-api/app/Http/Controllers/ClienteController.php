@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ClienteController extends Controller{
 
@@ -14,15 +15,25 @@ class ClienteController extends Controller{
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'email'=> 'required|email|unique:clientes,email',
             'role'=> 'required|string',
             'sector'=>'required|string',
-            'status'=>'required|in:active,inactive'
+            'status'=>'sometimes|in:active,inactive'
         ]);
 
-        $cliente = Cliente::create($validatedData);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+        # $cliente = Cliente::create($validator->validated());
+        $payload = $validator->validated();
+        $payload['status'] = $payload['status'] ?? 'active';
+        $cliente = Cliente::create($payload);
+
 
         return response()->json($cliente,201);
     }
@@ -32,7 +43,7 @@ class ClienteController extends Controller{
     }
 
     public function update(Request $request, Cliente $cliente){
-        $validatedData = $request->validate([
+        $validator = Validator::make($request->all(), [
         'name'=> 'required|string',
         'email'=>'required|email|unique:clientes,email,' . $cliente->id,
         'role'=> 'required|string',
@@ -40,7 +51,14 @@ class ClienteController extends Controller{
         'status'=>'required|in:active,inactive'
         ]);
 
-        $cliente->update($validatedData);
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+        $cliente->update($validator->validated());
+
 
         return response()->json($cliente,200);
     }
