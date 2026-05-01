@@ -6337,16 +6337,16 @@
         },
         {
             "name": "laravel/agent-detector",
-            "version": "v2.0.1",
+            "version": "v2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/agent-detector.git",
-                "reference": "fb26cb3e857ee972971f18176405084e64dfef5e"
+                "reference": "90694b9256099591cf9e55d08c18ba7a00bf099f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/fb26cb3e857ee972971f18176405084e64dfef5e",
-                "reference": "fb26cb3e857ee972971f18176405084e64dfef5e",
+                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/90694b9256099591cf9e55d08c18ba7a00bf099f",
+                "reference": "90694b9256099591cf9e55d08c18ba7a00bf099f",
                 "shasum": ""
             },
             "require": {
@@ -6395,7 +6395,7 @@
                 "issues": "https://github.com/laravel/agent-detector/issues",
                 "source": "https://github.com/laravel/agent-detector"
             },
-            "time": "2026-04-28T13:38:41+00:00"
+            "time": "2026-04-29T18:32:34+00:00"
         },
         {
             "name": "laravel/pail",
@@ -9237,5 +9237,5 @@
         "php": "^8.3"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

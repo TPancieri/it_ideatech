@@ -1,7 +1,7 @@
 services:
   laravelapp:
-    container_name: laravelapp
-    image: thiago/laravelapp:l.0.4
+    container_name: crud-app
+    image: thiago/crud-app:1.0.0
     build: .
     ports:
       - "8000:8000"
@@ -9,10 +9,10 @@ services:
       - .env
     depends_on:
       - db
-
+  
   db:
     container_name: db
-    image: postgres:15
+    image: postgres:17
     ports:
       - "5432:5432"
     environment:
@@ -24,3 +24,4 @@ services:
 
 volumes:
   pgdata: {}
+    
