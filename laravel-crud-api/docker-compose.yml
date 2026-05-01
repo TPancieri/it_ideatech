@@ -1,7 +1,7 @@
 services:
   laravelapp:
     container_name: crud-app
-    image: thiago/crud-app:1.0.0
+    image: thiago/crud-app:1.0.1
     build: .
     ports:
       - "8000:8000"
@@ -9,6 +9,9 @@ services:
       - .env
     depends_on:
       - db
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
   
   db:
     container_name: db

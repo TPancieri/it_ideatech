@@ -16,7 +16,10 @@ class ClienteController extends Controller{
     {
         $validatedData = $request->validate([
             'name' => 'required|string',
-            'email'=> 'required|string'
+            'email'=> 'required|string',
+            'role'=> 'required|string',
+            'sector'=>'required|string',
+            'status'=>'required|string'
         ]);
 
         $cliente = Cliente::create($validatedData);
@@ -31,7 +34,10 @@ class ClienteController extends Controller{
     public function update(Request $request, Cliente $cliente){
         $validatedData = $request->validate([
         'name'=> 'required|string',
-        'email'=>'required|string',
+        'email'=>'required|email',
+        'role'=> 'required|string',
+        'sector'=>'required|string',
+        'status'=>'required|in:active,inactive'
         ]);
 
         $cliente->update($validatedData);
