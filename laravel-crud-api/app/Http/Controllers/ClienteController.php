@@ -16,10 +16,10 @@ class ClienteController extends Controller{
     {
         $validatedData = $request->validate([
             'name' => 'required|string',
-            'email'=> 'required|string',
+            'email'=> 'required|email|unique:clientes,email',
             'role'=> 'required|string',
             'sector'=>'required|string',
-            'status'=>'required|string'
+            'status'=>'required|in:active,inactive'
         ]);
 
         $cliente = Cliente::create($validatedData);
@@ -34,7 +34,7 @@ class ClienteController extends Controller{
     public function update(Request $request, Cliente $cliente){
         $validatedData = $request->validate([
         'name'=> 'required|string',
-        'email'=>'required|email',
+        'email'=>'required|email|unique:clientes,email,' . $cliente->id,
         'role'=> 'required|string',
         'sector'=>'required|string',
         'status'=>'required|in:active,inactive'
@@ -46,8 +46,12 @@ class ClienteController extends Controller{
     }
 
     public function destroy(Cliente $cliente){
-        $cliente->delete();
+        #$cliente->delete();
 
-        return response()->json(null, 204);
+        $cliente->status = 'inactive';
+        $cliente->save();
+
+        return response()->json($cliente, 200);
+        #return response()->json(null, 204);
     }
 }

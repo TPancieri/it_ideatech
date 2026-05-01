@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('clientes', function (Blueprint $table) {
         $table->string('role');
         $table->string('sector');
-        $table->string('status');
+        $table->string('status')->default('active');
 });
     }
 
@@ -25,6 +25,8 @@ return new class extends Migration
     {
         Schema::table('clientes', function (Blueprint $table) {
             //
+            $table->dropColumn(['role', 'sector', 'status']);
         });
     }
 };
+
