@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Processo;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProcessoController extends Controller
 {
@@ -107,6 +108,31 @@ class ProcessoController extends Controller
         $processo->save();
 
         return response()->json($processo, 200);
+    }
+
+    public function showDocument(Processo $processo): BinaryFileResponse|JsonResponse{
+        if (! $processo->document_path) {
+            return response()->json([
+                'message' => 'No document uploaded for this processo.',
+            ], 404);
+        }
+
+        $disk = 'public';
+
+        if (! Storage::disk($disk)->exists($processo->document_path)) {
+            return response()->json([
+                'message' => 'Document file missing on disk.',
+            ], 404);
+        }
+
+        $absolutePath = Storage::disk($disk)->path($processo->document_path);
+
+        $mime = Storage::disk($disk)->mimeType($processo->document_path) ?: 'application/octet-stream';
+        $filename = basename($processo->document_path);
+
+        return response()->file($absolutePath, ['Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
 }

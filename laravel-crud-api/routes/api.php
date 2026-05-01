@@ -10,6 +10,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request){
 
 Route::apiResource('cliente', ClienteController::class);
 Route::post('processo/{processo}/document', [ProcessoController::class, 'uploadDocument']);
+Route::get('processo/{processo}/document', [ProcessoController::class, 'showDocument']);
 Route::apiResource('processo', ProcessoController::class);
 #Route::get('/cliente', [ClienteController::class, 'index']);
 #Route::post('/cliente', [ClienteController::class, 'store']);
