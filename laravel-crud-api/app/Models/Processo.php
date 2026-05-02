@@ -26,5 +26,21 @@ class Processo extends Model
             ->orderBy('clientes.id');
     }
 
+    public function assinaturaTokens(): HasMany
+    {
+        return $this->hasMany(ProcessoAssinaturaToken::class);
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(ProcessoStatusHistory::class);
+    }
+
+    public function respostas(): HasMany
+    {
+        return $this->hasMany(ProcessoResposta::class);
+    }
+
+
 }
 

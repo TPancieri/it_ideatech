@@ -129,6 +129,19 @@ Política de status (transições) está centralizada em `app/Services/ProcessoS
 
 Base típica: `http://localhost:8000/api`
 
+## Dashboard (Web — Requisito 4)
+
+Base típica: `http://localhost:8000`
+
+- `GET /dashboard`
+    - cards com totais por status
+    - tempo médio de aprovação (via histórico `approved`)
+    - lista de processos **pendentes** há mais de **N** dias (parâmetro `overdue_days`)
+    - filtros: `status`, `category`, `signatario_id`, `from`, `to`
+    - tabela de processos (até 200 linhas, sem paginação)
+- `GET /dashboard/processo/{id}`
+    - detalhes +
+
 ### Signatários
 
 - `GET /cliente`
