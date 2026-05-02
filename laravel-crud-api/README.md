@@ -129,7 +129,7 @@ Política de status (transições) está centralizada em `app/Services/ProcessoS
 
 Base típica: `http://localhost:8000/api`
 
-## Dashboard (Web — Requisito 4)
+## Dashboard
 
 Base típica: `http://localhost:8000`
 
@@ -140,7 +140,20 @@ Base típica: `http://localhost:8000`
     - filtros: `status`, `category`, `signatario_id`, `from`, `to`
     - tabela de processos (até 200 linhas, sem paginação)
 - `GET /dashboard/processo/{id}`
-    - detalhes +
+    - detalhes + histórico de status + respostas + auditoria
+
+## Relatórios
+
+Base típica: `http://localhost:8000`
+
+- `GET /relatorios/status` (+ export `GET /relatorios/status.csv`)
+    - quantidade por status + percentual do total
+- `GET /relatorios/produtividade-signatarios?from=&to=` (+ export CSV)
+    - total de aprovações/reprovações por signatário + tempo médio de resposta (primeira resposta por processo)
+- `GET /relatorios/processos-periodo?grain=day|week|month&from=&to=` (+ export CSV)
+    - criados por período + concluídos por período (conclusão = primeira transição para `approved/rejected` no histórico)
+- `GET /relatorios/reprovacoes?from=&to=` (+ export CSV)
+    - processo, signatário, data, justificativa
 
 ### Signatários
 

@@ -10,7 +10,10 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Dashboard operacional</h1>
-        <a class="btn btn-outline-secondary btn-sm" href="{{ url('/') }}">Home</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ url('/') }}">Home</a>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
