@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Processo;
+use App\Services\ProcessoStatusPolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +25,6 @@ class ProcessoController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'sometimes|string',
-            'status' => 'sometimes|in:pending,in_approval,approved,rejected,canceled',
             'responsible_user_id' => 'required|integer|exists:users,id',
             'category' => 'required|string|max:255',
         ]);
@@ -38,7 +38,8 @@ class ProcessoController extends Controller
 
         $payload = $validator->validated();
 
-        $payload['status'] = $payload['status'] ?? 'pending';
+        // Sempre comeca pendente
+        $payload['status'] = 'pending';
 
         $processo = Processo::create($payload);
 
@@ -57,7 +58,7 @@ class ProcessoController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'status' => 'required|in:pending,in_approval,approved,rejected,canceled',
+            'status' => 'sometimes|in:pending,in_approval,approved,rejected,canceled',
             'responsible_user_id' => 'required|integer|exists:users,id',
             'category' => 'required|string|max:255',
         ]);
@@ -70,8 +71,22 @@ class ProcessoController extends Controller
             ], 422);
         }
 
+        $data = $validator->validated();
+        $nextStatus = $data['status'] ?? $processo->status;
 
-        $processo->update($validator->validated());
+        $message = ProcessoStatusPolicy::validateTransition($processo->status, $nextStatus);
+        if ($message) {
+            return response()->json([
+                'message' => $message,
+                'errors' => [
+                    'status' => [$message],
+                ],
+            ], 422);
+        }
+
+        $data['status'] = $nextStatus;
+
+        $processo->update($data);
 
         return response()->json($processo, 200);
     }
