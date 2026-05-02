@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProcessAssinaturaWebController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\AnalyticsController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,3 +28,5 @@ Route::get('/relatorios/processos-periodo.csv', [ReportsController::class, 'peri
 
 Route::get('/relatorios/reprovacoes', [ReportsController::class, 'rejections'])->name('reports.rejections');
 Route::get('/relatorios/reprovacoes.csv', [ReportsController::class, 'rejectionsCsv'])->name('reports.rejections.csv');
+
+Route::get('/analise', [AnalyticsController::class, 'index'])->name('analytics.index');

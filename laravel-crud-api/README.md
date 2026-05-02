@@ -155,6 +155,24 @@ Base típica: `http://localhost:8000`
 - `GET /relatorios/reprovacoes?from=&to=` (+ export CSV)
     - processo, signatário, data, justificativa
 
+## Análise de Dados (Web — Requisito 6)
+
+Base típica: `http://localhost:8000`
+
+- `GET /analise?grain=day|week|month&from=&to=`
+    - **Qual o tempo médio de aprovação?**
+        - fórmula: média de \(`processo_status_histories.created_at - processos.created_at`\) para eventos com `to_status = approved`
+    - **Quais signatários mais aprovam/reprovam?**
+        - fonte: `processo_respostas` agregando por `cliente_id` (`tipo=approved` e `tipo=rejected`)
+        - tempo médio de resposta: primeira resposta do signatário em cada processo vs `processos.created_at`
+    - **Qual categoria possui maior volume?**
+        - fonte: `processos` agrupando por `category`
+    - **Qual status concentra mais processos atualmente?**
+        - fonte: `processos` agrupando por `status`
+    - **Quantos processos foram criados/concluídos por período?**
+        - criados: `processos.created_at` agrupado por período
+        - concluídos: primeira transição para `approved`/`rejected` em `processo_status_histories`
+
 ### Signatários
 
 - `GET /cliente`
