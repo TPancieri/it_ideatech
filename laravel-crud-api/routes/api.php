@@ -2,6 +2,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ProcessInvitationController;
 use App\Http\Controllers\ProcessoController;
 use App\Http\Controllers\ProcessoSignatarioController;
 
@@ -17,6 +18,8 @@ Route::get('processo/{processo}/signatarios', [ProcessoSignatarioController::cla
 Route::post('processo/{processo}/signatarios', [ProcessoSignatarioController::class, 'store']);
 Route::post('processo/{processo}/signatarios/sync', [ProcessoSignatarioController::class, 'sync']);
 Route::delete('processo/{processo}/signatarios/{cliente}', [ProcessoSignatarioController::class, 'destroy']);
+
+Route::post('processo/{processo}/convites', [ProcessInvitationController::class, 'enviar']);
 Route::apiResource('processo', ProcessoController::class);
 
 
