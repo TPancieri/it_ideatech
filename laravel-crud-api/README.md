@@ -1,63 +1,212 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel CRUD API — Trilha de Assinatura Digital (Teste Prático)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este repositório implementa uma API em **Laravel** para cadastro de **signatários**, gestão de **processos digitais**, **upload de documentos**, **associação de signatários**, **convites por e-mail via fila**, e **aprovação/reprovação por link com token** (com registros de histórico e auditoria).
 
-## Projeto
+> Observação: este README foi escrito para cobrir os itens típicos de entrega do teste (instalação, migrations/seeders, filas/jobs, como testar o fluxo). Ajuste host/porta conforme seu Docker/local.
 
-sort_order (no caso de ordem de assinatura do processo) e apenas um metadata de ordenacao/listagem,
-o sequenciamento real de fluxo de aprovacao vai acontecer depois (\*)
+## Requisitos
 
-## About Laravel
+- PHP **8.3+**
+- Composer
+- Banco: **PostgreSQL** (no Docker deste projeto) ou SQLite (ambiente local/dev)
+- Docker + Docker Compose (recomendado)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Como rodar (Docker — recomendado)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Na pasta do projeto (onde está o `docker-compose.yml`):
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d --build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Variáveis de ambiente
 
-## Contributing
+O container normalmente usa `.env` montado no projeto. Pontos importantes:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- **`APP_URL`**: deve bater com o host/porta que você abre no navegador/Postman (ex.: `http://localhost:8000`). Isso impacta URLs geradas em e-mails (`route()` / `url()`).
+- **Banco (Postgres no compose típico)**:
+    - `DB_CONNECTION=pgsql`
+    - `DB_HOST=db` (**somente dentro da rede Docker**)
+    - `DB_PORT=5432`
+    - credenciais conforme seu `docker-compose.yml`
+- **Fila**:
+    - `QUEUE_CONNECTION=database` (há migration da tabela `jobs`)
+- **E-mail (desenvolvimento)**:
+    - `MAIL_MAILER=log` grava e-mails no log (`storage/logs/laravel.log`)
 
-## Code of Conduct
+### Migrations + seed
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Dentro do container da aplicação (ex.: serviço/container `crud-app`):
 
-## Security Vulnerabilities
+```bash
+docker exec -it crud-app php artisan migrate
+docker exec -it crud-app php artisan db:seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Seed padrão cria um usuário de teste:
 
-## License
+- email: `test@example.com`
+- senha: `password`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Worker da fila (obrigatório para processar Jobs)
+
+Em outro terminal:
+
+```bash
+docker exec -it crud-app php artisan queue:work --tries=1
+```
+
+Sem o worker, jobs ficam na tabela `jobs` e **e-mails de convite não saem**.
+
+### Link público de storage (opcional)
+
+Se você for servir arquivos via `/storage/...`:
+
+```bash
+docker exec -it crud-app php artisan storage:link
+```
+
+## Como rodar (sem Docker)
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan serve
+```
+
+E em outro terminal:
+
+```bash
+php artisan queue:work --tries=1
+```
+
+## Testes automatizados
+
+```bash
+php artisan test
+```
+
+## Modelagem principal (resumo)
+
+### Signatários
+
+Tabela: `clientes` (representa o signatário).
+
+### Processos
+
+Tabela: `processos`
+
+Campos principais: `title`, `description`, `status`, `responsible_user_id` (FK `users.id`), `category`, `created_at` (timestamps), `document_path` (upload).
+
+### Associação processo ↔ signatário
+
+Tabela pivô: `cliente_processo`
+
+- `sort_order`:
+    - **0 para todos** ⇒ modo **paralelo** (todos podem responder)
+    - **`1,2,3...`** ⇒ modo **sequencial por degraus** (mesmo número ⇒ paralelo dentro do mesmo degrau)
+
+### Upload de documento
+
+- Endpoint dedicado (multipart): ver seção “Endpoints”.
+- Arquivo salvo em `storage/app/public/...` com `document_path` relativo ao disk `public`.
+
+### Fluxo de assinatura (Req. 3)
+
+Tabelas:
+
+- `processo_assinatura_tokens`: token **hash** + expiração + consumo
+- `processo_respostas`: aprovação/reprovação + IP + user agent + justificativa (reprovação)
+- `processo_status_histories`: histórico de mudanças de status do processo
+- `auditoria_eventos`: auditoria genérica (ex.: envio de convite)
+
+Política de status (transições) está centralizada em `app/Services/ProcessoStatusPolicy.php`.
+
+## Endpoints (API)
+
+Base típica: `http://localhost:8000/api`
+
+### Signatários
+
+- `GET /cliente`
+- `POST /cliente`
+- `GET /cliente/{id}`
+- `PUT/PATCH /cliente/{id}`
+- `DELETE /cliente/{id}` (**inativa** signatário no comportamento atual)
+
+### Processos (CRUD)
+
+- `GET /processo`
+- `POST /processo`
+- `GET /processo/{id}`
+- `PUT/PATCH /processo/{id}`
+- `DELETE /processo/{id}`
+
+### Upload de documento do processo
+
+- `POST /processo/{id}/document` (**multipart/form-data**, campo arquivo: `document`)
+- `GET /processo/{id}/document` (abre/stream do arquivo salvo; útil para validar upload)
+
+### Signatários do processo (pivô)
+
+- `GET /processo/{id}/signatarios`
+- `POST /processo/{id}/signatarios` (JSON: `{ "cliente_id": 1, "sort_order": 0 }`)
+- `POST /processo/{id}/signatarios/sync` (substitui lista inteira)
+- `DELETE /processo/{id}/signatarios/{clienteId}`
+
+### Convites (enfileira e-mails)
+
+- `POST /processo/{id}/convites`
+    - JSON opcional: `{ "ttl_hours": 72 }`
+
+### Fluxo web por token (navegador)
+
+Rotas (fora de `/api`):
+
+- `GET /assinatura/{token}`
+- `POST /assinatura/{token}/aprovar`
+- `POST /assinatura/{token}/reprovar` (justificativa obrigatória)
+
+## Como testar o fluxo completo
+
+1. Subir app + db + worker da fila
+2. `db:seed` (para existir `users.id` do responsável)
+3. Criar signatários (`POST /cliente`)
+4. Criar processo (`POST /processo`) usando `responsible_user_id` válido
+5. Associar signatários ao processo (`POST /processo/{id}/signatarios`)
+6. Enviar convites (`POST /processo/{id}/convites`)
+7. Pegar URL do e-mail:
+    - se `MAIL_MAILER=log`, ler `storage/logs/laravel.log` dentro do container
+8. Abrir `GET /assinatura/{token}` e aprovar/reprovar
+
+### Erros comuns
+
+- **500 em `/convites` com controller vazio/corrompido no volume**: verifique se os arquivos PHP não estão `0 bytes` no container.
+- **`DB_HOST=db` não resolve fora do Docker**: rode `php artisan` **dentro** do container, ou ajuste host para `127.0.0.1` se rodar artisan no Windows apontando para Postgres publicado.
+
+## Autenticação
+
+O projeto inclui rota padrão:
+
+- `GET /api/user` com `auth:sanctum`
+
+Para o escopo atual do teste, os fluxos principais via Postman foram pensados para validação funcional **sem obrigar UI de login**, mas Sanctum pode ser habilitado/expandido.
+
+## Atual vs Final
+
+Implementado no momento:
+
+- Req. 1 signatários
+- Req. 2 processos + upload + associação + status mínimos (via policy de transição)
+- Req. 3 convites assíncronos + token + aprovação/reprovação + registros + histórico
+- Base de auditoria/histórico
+
+Pendências:
+
+- Req. 4 dashboard + filtros + SLA/atrasados + relatórios (5)
+- Req. 6 camada de consultas analíticas + README de indicadores
+- Req. 7 export consolidado “datalake-like”
+- Req. 8 ampliar auditoria para todas ações relevantes + tela de detalhes
