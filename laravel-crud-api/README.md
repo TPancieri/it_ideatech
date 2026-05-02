@@ -247,10 +247,10 @@ Implementado no momento:
 - Req. 2 processos + upload + associação + status mínimos (via policy de transição)
 - Req. 3 convites assíncronos + token + aprovação/reprovação + registros + histórico
 - Base de auditoria/histórico
+- Req. 4 dashboard + filtros + SLA/atrasados + relatórios (5)
+- Req. 6 camada de consultas analíticas + README de indicadores
 
 Pendências:
 
-- Req. 4 dashboard + filtros + SLA/atrasados + relatórios (5)
-- Req. 6 camada de consultas analíticas + README de indicadores
 - Req. 7 export consolidado “datalake-like”
 - Req. 8 ampliar auditoria para todas ações relevantes + tela de detalhes
