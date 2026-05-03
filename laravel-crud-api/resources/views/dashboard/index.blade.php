@@ -16,7 +16,7 @@
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('processos.index') }}">Processos</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('signatarios.index') }}">Signatários</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index') }}">Auditoria</a>
-            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.index') }}">Relatórios</a>
             <form action="{{ route('logout') }}" method="post" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-outline-danger btn-sm">Sair</button>

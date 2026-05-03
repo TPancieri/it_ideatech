@@ -11,6 +11,7 @@ use App\Services\StatusTransitionLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -221,6 +222,30 @@ class ProcessoWebController extends Controller
         }
 
         return redirect()->route('processos.index')->with('success', 'Processo atualizado.');
+    }
+
+    public function documento(Processo $processo): BinaryFileResponse
+    {
+        $this->authorize('view', $processo);
+
+        if (! $processo->document_path) {
+            abort(404);
+        }
+
+        $disk = 'public';
+
+        if (! Storage::disk($disk)->exists($processo->document_path)) {
+            abort(404);
+        }
+
+        $absolutePath = Storage::disk($disk)->path($processo->document_path);
+        $mime = Storage::disk($disk)->mimeType($processo->document_path) ?: 'application/octet-stream';
+        $filename = basename($processo->document_path);
+
+        return response()->file($absolutePath, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
     }
 
     public function destroy(Request $request, Processo $processo): RedirectResponse

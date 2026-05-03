@@ -27,6 +27,11 @@
                 <div class="col-md-8">
                     <div class="fw-semibold fs-5">{{ $processo->title }}</div>
                     <div class="text-muted">{{ $processo->description }}</div>
+                    @if ($processo->document_path)
+                        <div class="mt-2">
+                            <a class="btn btn-sm btn-outline-primary" href="{{ route('processos.documento', $processo) }}" target="_blank" rel="noopener">Ver documento anexado</a>
+                        </div>
+                    @endif
                 </div>
                 <div class="col-md-4">
                     <div><span class="text-muted">Status:</span> <span class="badge text-bg-secondary">{{ $processo->status }}</span></div>

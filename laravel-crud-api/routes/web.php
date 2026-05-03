@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/painel', [PainelController::class, 'index'])->name('painel');
+    Route::post('/painel/demo-seed', [PainelController::class, 'seedDemo'])->name('painel.demo-seed');
 
     Route::get('/signatarios', [SignatarioWebController::class, 'index'])->name('signatarios.index');
     Route::get('/signatarios/create', [SignatarioWebController::class, 'create'])->name('signatarios.create');
@@ -43,6 +44,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/processos', [ProcessoWebController::class, 'store'])->name('processos.store');
     Route::get('/processos/{processo}/editar', [ProcessoWebController::class, 'edit'])->name('processos.edit');
     Route::put('/processos/{processo}', [ProcessoWebController::class, 'update'])->name('processos.update');
+    Route::get('/processos/{processo}/documento', [ProcessoWebController::class, 'documento'])->name('processos.documento');
     Route::delete('/processos/{processo}', [ProcessoWebController::class, 'destroy'])->name('processos.destroy');
 
     Route::get('/fluxo-assinatura', [FluxoAssinaturaWebController::class, 'index'])->name('fluxo.index');
@@ -55,6 +57,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/processo/{processo}', [DashboardController::class, 'show'])->name('dashboard.show');
 
+    Route::get('/relatorios', [ReportsController::class, 'index'])->name('reports.index');
     Route::get('/relatorios/status', [ReportsController::class, 'status'])->name('reports.status');
     Route::get('/relatorios/status.csv', [ReportsController::class, 'statusCsv'])->name('reports.status.csv');
 

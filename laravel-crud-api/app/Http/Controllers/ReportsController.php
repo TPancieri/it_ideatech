@@ -9,6 +9,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportsController extends Controller
 {
+    public function index(): View
+    {
+        return view('reports.index');
+    }
+
     public function status(Request $request, ReportsQueryService $reports): View
     {
         $rows = $reports->processesByStatus((int) $request->user()->id);
@@ -20,7 +25,7 @@ class ReportsController extends Controller
 
     public function statusCsv(Request $request, ReportsQueryService $reports): StreamedResponse
     {
-        $rows = $reports->processesByStatus();
+        $rows = $reports->processesByStatus((int) $request->user()->id);
 
         return $this->csvStream('relatorio_processos_por_status.csv', ['status', 'count', 'percent'], array_map(fn ($r) => [
             $r['status'],

@@ -5,13 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Processo extends Model
 {
     use HasFactory;
-    protected $fillable = ['title', 'description', 'status', 'responsible_user_id', 'category', 'document_path'];
+
+    protected $fillable = [
+        'title',
+        'description',
+        'status',
+        'responsible_user_id',
+        'category',
+        'document_path',
+    ];
+
     public function responsibleUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'responsible_user_id');
@@ -41,6 +51,23 @@ class Processo extends Model
         return $this->hasMany(ProcessoResposta::class);
     }
 
+    /**
+     * URL absoluta do ficheiro no disco `public` (ex.: e-mail com link ao anexo).
+     * Requer `php artisan storage:link` e `APP_URL` correcto.
+     */
+    public function documentPublicUrl(): ?string
+    {
+        if (! $this->document_path) {
+            return null;
+        }
 
+        $disk = 'public';
+
+        if (! Storage::disk($disk)->exists($this->document_path)) {
+            return null;
+        }
+
+        return url(Storage::disk($disk)->url($this->document_path));
+    }
 }
 

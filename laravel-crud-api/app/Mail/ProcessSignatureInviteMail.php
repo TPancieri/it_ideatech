@@ -22,6 +22,7 @@ class ProcessSignatureInviteMail extends Mailable
         public Processo $processo,
         public Cliente $cliente,
         public string $plainToken,
+        public ?string $documentPublicUrl = null,
     ) {
     }
 

@@ -4,6 +4,8 @@ Este repositório implementa uma API em **Laravel** para cadastro de **signatár
 
 > Observação: este README foi escrito para cobrir os itens típicos de entrega do teste (instalação, migrations/seeders, filas/jobs, como testar o fluxo). Ajuste host/porta conforme seu Docker/local.
 
+> Não há credencial fixa; crie conta na home
+
 ## Requisitos
 
 - PHP **8.3+**
@@ -66,6 +68,13 @@ docker exec -it crud-app php artisan db:seed
 ```
 
 O `DatabaseSeeder` **não cria mais usuário fixo** por padrão: o operador deve **cadastrar-se na página inicial** (`/`) e usar esse usuário como **responsável** (`responsible_user_id`) nos processos. O seeder continua disponível para você adicionar dados opcionais (veja comentários em `database/seeders/DatabaseSeeder.php`).
+
+### Massa de dados demo (cenários reais)
+
+- **Consola (qualquer ambiente):** `php artisan demo:seed-scenario` cria dezenas de processos com título `[Demo] …` e signatários com e-mail `demo-seed-u{id}-N@example.invalid`, atribuídos ao utilizador indicado. Por omissão apaga antes os dados demo desse utilizador. Exemplos:
+    - `php artisan demo:seed-scenario --user=seu@email.com`
+    - `php artisan demo:seed-scenario --no-purge` (evita o purge; pode falhar se os e-mails demo já existirem, por causa do `UNIQUE` em `clientes.email`).
+- **Painel (só `APP_ENV=local`):** no canto superior do `/painel` há um formulário que chama a mesma lógica (substitui a massa demo da conta autenticada). Não aparece em produção.
 
 ### Acesso ao sistema (web + autenticação por sessão)
 

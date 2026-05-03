@@ -3,8 +3,24 @@
 @section('title', 'Painel')
 
 @section('content')
-    <h1 class="h3 mb-4">Painel</h1>
-    <p class="text-muted mb-4">Acesso rápido às áreas do teste prático.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Painel</h1>
+            <p class="text-muted mb-0">Acesso rápido às áreas do teste prático.</p>
+        </div>
+        @if (in_array(app()->environment(), ['local', 'testing'], true))
+            <form action="{{ route('painel.demo-seed') }}" method="post" class="border rounded p-2 bg-light small" onsubmit="return confirm('Isto apaga dados demo anteriores (títulos [Demo] … e e-mails demo-seed-) desta conta e cria nova massa. Continuar?');">
+                @csrf
+                <div class="fw-semibold mb-1">Massa de dados (local)</div>
+                <p class="text-muted mb-2 mb-0" style="max-width: 22rem;">Cenários para dashboard e relatórios. Em produção use o comando <code class="small">php artisan demo:seed-scenario</code>.</p>
+                <button type="submit" class="btn btn-sm btn-outline-secondary mt-2">Gerar / substituir demo</button>
+            </form>
+        @endif
+    </div>
+
+    @if (session('success'))
+        <div class="alert alert-success py-2 small">{{ session('success') }}</div>
+    @endif
 
     <div class="row g-3">
         <div class="col-md-4">
@@ -49,7 +65,7 @@
                 <div class="card-body">
                     <h2 class="h6">Relatórios (Req. 5)</h2>
                     <p class="small text-muted mb-3">Relatórios gerenciais e export CSV.</p>
-                    <a class="btn btn-primary btn-sm" href="{{ route('reports.status') }}">Abrir relatórios</a>
+                    <a class="btn btn-primary btn-sm" href="{{ route('reports.index') }}">Abrir relatórios</a>
                 </div>
             </div>
         </div>

@@ -7,7 +7,7 @@
                 <a class="nav-link text-white-50" href="{{ route('signatarios.index') }}">Signatários</a>
                 <a class="nav-link text-white-50" href="{{ route('processos.index') }}">Processos</a>
                 <a class="nav-link text-white-50" href="{{ route('dashboard.index') }}">Dashboard</a>
-                <a class="nav-link text-white-50" href="{{ route('reports.status') }}">Relatórios</a>
+                <a class="nav-link text-white-50" href="{{ route('reports.index') }}">Relatórios</a>
                 <a class="nav-link text-white-50" href="{{ route('analytics.index') }}">Análise</a>
                 <a class="nav-link text-white-50" href="{{ route('auditoria.index') }}">Auditoria</a>
                 <span class="nav-link text-white-50 small">{{ Auth::user()->name }}</span>

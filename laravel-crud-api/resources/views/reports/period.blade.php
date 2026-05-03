@@ -11,6 +11,8 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Relatório — Processos por período</h1>
         <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.index') }}">Todos os relatórios</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Dashboard</a>
             <a class="btn btn-outline-primary btn-sm"
                href="{{ route('reports.period.csv', ['grain' => $grain, 'from' => $from, 'to' => $to]) }}">Export CSV</a>

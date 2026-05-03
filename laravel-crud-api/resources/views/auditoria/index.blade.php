@@ -13,7 +13,7 @@
         <div class="d-flex gap-2">
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Dashboard</a>
-            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.index') }}">Relatórios</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('analytics.index') }}">Análise</a>
             <form action="{{ route('logout') }}" method="post" class="d-inline">
                 @csrf

@@ -48,6 +48,7 @@ class SendProcessSignatureInviteJob implements ShouldQueue
             processo: $processo,
             cliente: $cliente,
             plainToken: $issued['plain_token'],
+            documentPublicUrl: $processo->documentPublicUrl(),
         ));
 
         AuditLogger::log(
