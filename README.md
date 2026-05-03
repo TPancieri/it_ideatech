@@ -1,72 +1,99 @@
 # Laravel CRUD API — Trilha de Assinatura Digital (Teste Prático)
 
-Este repositório implementa uma API em **Laravel** para cadastro de **signatários**, gestão de **processos digitais**, **upload de documentos**, **associação de signatários**, **convites por e-mail via job assíncrono** , e **aprovação/reprovação por link com token** (com registros de histórico e auditoria). Documentação dos endpoints: [`docs/API_REST.md`](docs/API_REST.md).
+Este repositório implementa uma API em **Laravel** para cadastro de **signatários**, gestão de **processos digitais**, **upload de documentos**, **associação de signatários**, **convites por e-mail via job assíncrono**, e **aprovação/reprovação por link com token** (com registros de histórico e auditoria). Documentação dos endpoints: [`docs/API_REST.md`](docs/API_REST.md).
 
-> Observação:  Ajuste host/porta conforme seu Docker/local.
-> Não há credencial fixa; crie conta na home
+> Ajuste host/porta conforme seu Docker ou ambiente local. **Não há usuário/senha fixos:** cadastre-se na página inicial (`/`).
 
-## Requisitos
+## Rodar com Docker depois do `git clone`
 
-- PHP **8.3+**
-- Composer
-- Banco: **PostgreSQL** (no Docker deste projeto) ou SQLite (ambiente local/dev)
-- Docker + Docker Compose (recomendado)
-- **Laravel Sanctum** (dependência PHP listada no `composer.json`; não é um serviço separado — veja a nota abaixo)
+Na pasta do repositório (onde está o `docker-compose.yml`). O container da app chama-se **`crud-app`** (veja `container_name` no compose).
 
-### Sanctum no seu ambiente local
+1. **Criar o ficheiro de ambiente** (na raiz do projeto, ao lado do compose):
 
-Quando você **atualiza o repositório** (pull) neste estado do projeto:
+```bash
+cp .env.example .env
+```
 
-1. Rode **`composer install`** na pasta do projeto (ou `composer update` se estiver gerenciando versões). Isso baixa o Sanctum porque ele já está no `composer.lock` — **não é obrigatório** repetir `composer require laravel/sanctum` no dia a dia.
-2. Rode **`php artisan migrate`** para criar a tabela `personal_access_tokens` (migration já versionada em `database/migrations/`).
-3. **`php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"`** só é necessário se você estiver num **clone antigo** que ainda **não** tenha os arquivos publicados (`config/sanctum.php` + migration de tokens). Neste repositório esses arquivos **já foram incluídos**; quem só dá `git pull` + `composer install` + `migrate` não precisa publicar de novo.
+2. **Editar o `.env`** e garantir pelo menos isto para o compose atual (Postgres no Docker):
 
-## Primeiro uso após clonar do GitHub
+```env
+APP_URL=http://localhost:8000
 
-1. **Clone** o repositório e entre na pasta: `git clone …` e `cd laravel-crud-api`.
-2. **Docker (recomendado):** na raiz do projeto, `docker compose up -d --build`. Ajuste o nome do serviço da app no `docker-compose.yml` se for diferente de `crud-app` (os comandos abaixo usam `crud-app` como exemplo).
-3. **`.env`:** o compose costuma montar o `.env` da sua máquina. Se não existir, copie `cp .env.example .env` **no host** e rode `php artisan key:generate` dentro do container. Confira `APP_URL` (ex.: `http://localhost:8000`), credenciais de **DB** alinhadas ao `docker-compose.yml`, `QUEUE_CONNECTION=database` (ou `sync` só para testar sem worker) e `MAIL_MAILER=log` para ver convites no log.
-4. **Migrations + link de storage:**  
-   `docker exec -it crud-app php artisan migrate`  
-   `docker exec -it crud-app php artisan storage:link` (upload de documentos / URLs públicas).
-5. **Fila:** em terminal separado, `docker exec -it crud-app php artisan queue:work --tries=1` — **obrigatório** para processar convites se `QUEUE_CONNECTION` não for `sync`.
-6. **Abrir** `APP_URL` no navegador → **cadastro** na home → **Painel** → criar signatários e processos. Não há usuário fixo no seeder; use o formulário de cadastro.
-7. **Testes:** `docker exec -it crud-app php artisan test`.
-8. **Se algo falhar:** confira se a porta do host não conflita, se o container `db` está healthy, se `DB_HOST` dentro do container é o nome do serviço (`db`) e não `127.0.0.1`, e se o worker da fila está ativo ao testar e-mails de convite.
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=postgres
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+```
 
-## Como rodar (Docker — recomendado)
+Opcional para **menos um terminal** (convites e e-mails rodam na hora, sem worker):
 
-Na pasta do projeto (onde está o `docker-compose.yml`):
+```env
+QUEUE_CONNECTION=sync
+```
+
+Se preferir fila real (`QUEUE_CONNECTION=database`), depois do migrate abra **outro** terminal e deixe a fila a correr: `docker exec -it crud-app php artisan queue:work --tries=1`.
+
+3. **Subir os contentores**:
 
 ```bash
 docker compose up -d --build
 ```
 
-### Variáveis de ambiente
+4. **Instalar dependências PHP** :
 
-O container normalmente usa `.env` montado no projeto. Pontos importantes:
+```bash
+docker exec -it crud-app composer install
+```
 
-- **`APP_URL`**: deve bater com o host/porta que você abre no navegador/Postman (ex.: `http://localhost:8000`). Isso impacta URLs geradas em e-mails (`route()` / `url()`).
-- **Banco (Postgres no compose típico)**:
-    - `DB_CONNECTION=pgsql`
-    - `DB_HOST=db` (**somente dentro da rede Docker**)
-    - `DB_PORT=5432`
-    - credenciais conforme seu `docker-compose.yml`
-- **Fila**:
-    - `QUEUE_CONNECTION=database` (há migration da tabela `jobs`)
-- **E-mail (desenvolvimento)**:
-    - `MAIL_MAILER=log` grava e-mails no log (`storage/logs/laravel.log`)
+5. **Chave da aplicação e base de dados:**
 
-### Migrations + seed
+```bash
+docker exec -it crud-app php artisan key:generate
+docker exec -it crud-app php artisan migrate
+docker exec -it crud-app php artisan storage:link
+```
 
-Dentro do container da aplicação (ex.: serviço/container `crud-app`):
+(`db:seed` é opcional; não cria utilizador fixo.)
+
+6. **Abrir no browser:** [http://localhost:8000](http://localhost:8000) → **Cadastro** → **Painel**.
+
+7. **Testes (opcional):** `docker exec -it crud-app php artisan test`
+
+**Se algo falhar:** porta `8000` ou `5432` ocupada no host; container `db` ainda a arrancar (espere ~10 s e volte a `migrate`); `DB_HOST` tem que ser **`db`** (nome do serviço na rede Docker), não `127.0.0.1`, quando corre o Artisan **dentro** do `crud-app`.
+
+---
+
+## Requisitos 
+
+- **Docker + Docker Compose**
+- Ou PHP **8.3+** + Composer + SQLite ou Postgres, se for correr sem Docker (ver secção mais abaixo).
+- **Laravel Sanctum** já vem no `composer.json`; ficheiros publicados e migrations estão no repo.
+
+## Como rodar (Docker — detalhe extra)
+
+Na pasta do projeto:
+
+```bash
+docker compose up -d --build
+```
+
+### Variáveis de ambiente (resumo)
+
+- **`APP_URL`**: deve coincidir com o que abre no browser (ex.: `http://localhost:8000`) — afecta links em e-mails.
+- **Postgres no compose:** `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` estão no `docker-compose.yml`; o `.env` da app deve usar o mesmo utilizador, base e `DB_HOST=db`.
+- **Fila:** `QUEUE_CONNECTION=database` exige `queue:work`; com `sync` não precisa de worker em desenvolvimento.
+- **E-mail em dev:** `MAIL_MAILER=log` grava convites em `storage/logs/laravel.log`.
+
+### Migrations + seed (opcional)
 
 ```bash
 docker exec -it crud-app php artisan migrate
 docker exec -it crud-app php artisan db:seed
 ```
 
-O `DatabaseSeeder` **não cria mais usuário fixo** por padrão: o operador deve **cadastrar-se na página inicial** (`/`) e usar esse usuário como **responsável** (`responsible_user_id`) nos processos. O seeder continua disponível para você adicionar dados opcionais (veja comentários em `database/seeders/DatabaseSeeder.php`).
+O `DatabaseSeeder` não cria utilizador fixo; use o cadastro na web ou `demo:seed-scenario` para massa de dados de teste.
 
 ### Massa de dados demo
 
@@ -90,7 +117,7 @@ Em outro terminal:
 docker exec -it crud-app php artisan queue:work --tries=1
 ```
 
-**Convites :** `POST /api/processo/{id}/convites`, o botão na página de fluxo e o envio ao **criar processo** na web disparam `SendProcessSignatureInviteJob::dispatch(...)`. O job cria o token (hash + cifra), envia o mailable e só completa quando o **worker** processar a fila. Sem worker, os jobs ficam na tabela `jobs` e **não** há e-mail nem linha em `processo_assinatura_tokens` até processar.
+**Convites:** `POST /api/processo/{id}/convites`, o botão na página de fluxo e o envio ao **criar processo** na web disparam `SendProcessSignatureInviteJob::dispatch(...)`. O job cria o token (hash + cifra), envia o mailable e só completa quando o **worker** processar a fila. Sem worker, os jobs ficam na tabela `jobs` e **não** há e-mail nem linha em `processo_assinatura_tokens` até processar.
 
 Em desenvolvimento você pode usar `QUEUE_CONNECTION=sync` no `.env` para executar jobs no mesmo processo PHP (sem `queue:work`), útil só em máquina local.
 
@@ -101,23 +128,51 @@ Se você for servir arquivos via `/storage/...`:
 ```bash
 docker exec -it crud-app php artisan storage:link
 ```
+## Como rodar (sem Docker) 
 
-## Como rodar (sem Docker)
+1. **Clonar** e entrar na pasta do projecto.
 
-```bash
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan serve
-```
+2. **Criar o `.env` a partir do exemplo** (escolhe o comando do seu sistema):
 
-E em outro terminal (**necessário** para convites se `QUEUE_CONNECTION` não for `sync`):
+   | Ambiente | Comando |
+   |----------|---------|
+   | Windows PowerShell | `Copy-Item .env.example .env` |
+   | Windows cmd | `copy .env.example .env` |
+   | Linux / macOS | `cp .env.example .env` |
 
-```bash
-php artisan queue:work --tries=1
-```
+3. **Abrir o `.env`** (o que acabou de ser criado). Para SQLite local, confirma que esta (o `.env.example` já vem assim):
+
+   - `DB_CONNECTION=sqlite`
+   - Não precisas de `DB_HOST` / pode deixar essas linhas comentadas.
+
+   Opcional: `APP_URL=http://127.0.0.1:8000` (igual ao endereço do `php artisan serve`).
+
+4. **Criar o folder da base SQLite** (vazio), na pasta `database/`:
+
+   | Ambiente | Comando |
+   |----------|---------|
+   | PowerShell | `New-Item -ItemType File -Path database\database.sqlite -Force` |
+   | cmd | `type nul > database\database.sqlite` |
+   | Linux / macOS | `touch database/database.sqlite` |
+
+   (O Laravel usa `database/database.sqlite` por omissão quando `DB_DATABASE` não está definido.)
+
+5. **Instalar dependências e preparar a app:**
+
+   ```bash
+   composer install
+   php artisan key:generate
+   php artisan migrate
+   php artisan storage:link
+   ```
+
+6. **(Opcional)** `php artisan db:seed` — não cria utilizador fixo.
+
+7. **Subir o servidor:** `php artisan serve` → abre [http://127.0.0.1:8000](http://127.0.0.1:8000) e registra na home.
+
+**Fila:** no `.env.example` actual, `QUEUE_CONNECTION=sync` evita precisar de segundo terminal com `queue:work`. Se mudar para `database`, usa no outro terminal: `php artisan queue:work --tries=1`.
+
+> **Validação local:** Windows 10, PHP 8.5, SQLite, sem Docker
 
 ## Testes automatizados
 
@@ -239,7 +294,7 @@ Base típica: `http://localhost:8000/api`
 - `GET /processos`, `GET /processos/criar`, **`GET /processos/{id}/editar`**, **`PUT /processos/{id}`**, **`DELETE /processos/{id}`** — **CRUD web** de processos (Req. 2) só para o responsável; na listagem há **Fluxo**, **Editar** e **Excluir**. Ao criar com signatários, **convites são enfileirados por padrão** (como `POST /api/processo/{id}/convites`); dá para marcar _Não enviar convites agora_. **Tokens** aparecem após o worker processar os jobs (ou imediatamente com `QUEUE_CONNECTION=sync`).
 - Fluxo de assinatura (Req. 3): ver bullets em [Fluxo de assinatura (Req. 3)](#fluxo-de-assinatura-req-3) (rotas `/fluxo-assinatura` e `/processos/{id}/fluxo-assinatura`)
 
-## Segurança do fluxo- Confidencialidade do token
+## Segurança do fluxo — confidencialidade do token
 
 - **Em trânsito:** o signatário recebe uma URL opaca (`/assinatura/{token}`). Em **produção**, exija **HTTPS** para que o token não trafegue em claro na rede.
 - **Em repouso (banco):** o sistema guarda apenas **`token_hash`** (SHA-256) para comparar o token recebido na URL **sem** armazenar o valor em claro nesse campo.
@@ -281,6 +336,7 @@ Base típica: `http://localhost:8000`
 
 Base típica: `http://localhost:8000`
 
+- `GET /relatorios` — índice com links para todos os relatórios abaixo
 - `GET /relatorios/status` (+ export `GET /relatorios/status.csv`)
     - quantidade por status + percentual do total (**filtrado ao seu usuário responsável**)
 - `GET /relatorios/produtividade-signatarios?from=&to=` (+ export CSV)
