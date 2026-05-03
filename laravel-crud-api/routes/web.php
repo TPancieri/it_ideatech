@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PainelController;
 use App\Http\Controllers\ProcessAssinaturaWebController;
+use App\Http\Controllers\ProcessoWebController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SignatarioWebController;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/signatarios/{cliente}/edit', [SignatarioWebController::class, 'edit'])->name('signatarios.edit');
     Route::put('/signatarios/{cliente}', [SignatarioWebController::class, 'update'])->name('signatarios.update');
     Route::delete('/signatarios/{cliente}', [SignatarioWebController::class, 'destroy'])->name('signatarios.destroy');
+
+    Route::get('/processos', [ProcessoWebController::class, 'index'])->name('processos.index');
+    Route::get('/processos/criar', [ProcessoWebController::class, 'create'])->name('processos.create');
+    Route::post('/processos', [ProcessoWebController::class, 'store'])->name('processos.store');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/processo/{processo}', [DashboardController::class, 'show'])->name('dashboard.show');

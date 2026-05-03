@@ -5,6 +5,7 @@
             <div class="navbar-nav ms-auto flex-row gap-2 align-items-center">
                 <a class="nav-link text-white-50" href="{{ route('painel') }}">Início</a>
                 <a class="nav-link text-white-50" href="{{ route('signatarios.index') }}">Signatários</a>
+                <a class="nav-link text-white-50" href="{{ route('processos.index') }}">Processos</a>
                 <a class="nav-link text-white-50" href="{{ route('dashboard.index') }}">Dashboard</a>
                 <a class="nav-link text-white-50" href="{{ route('reports.status') }}">Relatórios</a>
                 <a class="nav-link text-white-50" href="{{ route('analytics.index') }}">Análise</a>

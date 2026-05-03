@@ -6,11 +6,13 @@ use App\Models\Processo;
 use App\Models\User;
 use App\Services\ProcessSigningTokenService;
 use Illuminate\Support\Facades\Queue;
+use Laravel\Sanctum\Sanctum;
 
 test('enqueue invitation jobs for all signatarios', function () {
     Queue::fake();
 
     $user = User::factory()->create();
+    Sanctum::actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'P',

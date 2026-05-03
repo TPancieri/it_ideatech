@@ -1,0 +1,49 @@
+@extends('layouts.app')
+
+@section('title', 'Processos')
+
+@section('content')
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Meus processos</h1>
+        <a class="btn btn-primary btn-sm" href="{{ route('processos.create') }}">Novo processo</a>
+    </div>
+    <p class="text-muted small">Listagem filtrada pelo seu usuário como responsável.</p>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th>Documento</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse ($processos as $p)
+                    <tr>
+                        <td>{{ $p->id }}</td>
+                        <td>{{ $p->title }}</td>
+                        <td>{{ $p->category }}</td>
+                        <td><span class="badge text-bg-secondary">{{ $p->status }}</span></td>
+                        <td class="small">{{ $p->document_path ? 'Sim' : '—' }}</td>
+                        <td>
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.show', $p) }}">Detalhe</a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-muted p-4">Nenhum processo ainda. Crie o primeiro.</td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if ($processos->hasPages())
+            <div class="card-footer">{{ $processos->links() }}</div>
+        @endif
+    </div>
+@endsection

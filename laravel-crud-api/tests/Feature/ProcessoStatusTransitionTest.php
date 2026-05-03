@@ -2,9 +2,11 @@
 
 use App\Models\Processo;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 test('cannot jump from pending directly to approved', function () {
     $user = User::factory()->create();
+    Sanctum::actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'P',
@@ -29,6 +31,7 @@ test('cannot jump from pending directly to approved', function () {
 
 test('can move pending -> in_approval -> approved', function () {
     $user = User::factory()->create();
+    Sanctum::actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'P',

@@ -2,6 +2,7 @@
 
 use App\Models\AuditoriaEvento;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 test('auditoria page loads', function () {
     $this->actingAs(User::factory()->create());
@@ -9,6 +10,8 @@ test('auditoria page loads', function () {
 });
 
 test('creating cliente logs audit event', function () {
+    Sanctum::actingAs(User::factory()->create());
+
     $this->postJson('/api/cliente', [
         'name' => 'N',
         'email' => 'audit_cli@example.com',
@@ -23,6 +26,7 @@ test('creating cliente logs audit event', function () {
 test('creating processo logs audit event', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
+    Sanctum::actingAs($user);
 
     $this->postJson('/api/processo', [
         'title' => 'T',

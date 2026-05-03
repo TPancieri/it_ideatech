@@ -3,9 +3,11 @@
 use App\Models\Cliente;
 use App\Models\Processo;
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
 test('can attach and list signatarios on a processo', function () {
     $user = User::factory()->create();
+    Sanctum::actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'Processo X',
@@ -51,6 +53,7 @@ test('can attach and list signatarios on a processo', function () {
 
 test('cannot attach the same signatario twice', function () {
     $user = User::factory()->create();
+    Sanctum::actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'Processo X',

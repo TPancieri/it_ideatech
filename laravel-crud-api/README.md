@@ -138,7 +138,7 @@ Campos principais no dataset (CSV/JSONL): identificação do processo (`processo
 
 ### Signatários
 
-Tabela: `clientes` (representa o signatário).
+Tabela: `clientes` (no seu projeto, “Cliente” representa o signatário).
 
 ### Processos
 
@@ -174,7 +174,23 @@ Política de status (transições) está centralizada em `app/Services/ProcessoS
 
 Base típica: `http://localhost:8000/api`
 
-## Dashboard
+### Autenticação (Laravel Sanctum — token pessoal)
+
+1. Crie um usuário pela **web** (`/` → cadastro) ou em testes com `User::factory()`.
+2. `POST /api/login` (JSON): `email`, `password`, opcional `device_name` (rótulo do token, ex.: `postman`).
+3. A resposta devolve `token` (guarde imediatamente; não é mostrado de novo) e `token_type: Bearer`.
+4. Nas demais rotas, envie o header **`Authorization: Bearer {token}`**.
+5. `POST /api/logout` com o mesmo header revoga o token corrente.
+
+**Rota pública na API:** somente `POST /api/login`. Todo o restante (incluindo `GET /api/user`) exige `auth:sanctum`.
+
+### Telas web (operador, após login)
+
+- `GET /painel` — atalhos
+- `GET /signatarios`, `GET /signatarios/create`, … — cadastro de signatários (Req. 1)
+- `GET /processos`, `GET /processos/criar` — listagem dos seus processos e **cadastro com documento opcional + signatários** (Req. 2)
+
+## Dashboard (Web — Requisito 4)
 
 Base típica: `http://localhost:8000`
 
@@ -183,11 +199,11 @@ Base típica: `http://localhost:8000`
     - tempo médio de aprovação (via histórico `approved`)
     - lista de processos **pendentes** há mais de **N** dias (parâmetro `overdue_days`)
     - filtros: `status`, `category`, `signatario_id`, `from`, `to`
-    - tabela de processos (até 200 linhas, sem paginação)
+    - tabela de processos (até **200** linhas, sem paginação)
 - `GET /dashboard/processo/{id}`
     - detalhes + histórico de status + respostas + auditoria
 
-## Relatórios
+## Relatórios (Web — Requisito 5)
 
 Base típica: `http://localhost:8000`
 
@@ -220,6 +236,8 @@ Base típica: `http://localhost:8000`
 
 ### Signatários
 
+Todas exigem header **`Authorization: Bearer {token}`** (exceto login).
+
 - `GET /cliente`
 - `POST /cliente`
 - `GET /cliente/{id}`
@@ -227,6 +245,8 @@ Base típica: `http://localhost:8000`
 - `DELETE /cliente/{id}` (**inativa** signatário no comportamento atual)
 
 ### Processos (CRUD)
+
+Requer **`Authorization: Bearer {token}`**.
 
 - `GET /processo`
 - `POST /processo`
@@ -259,12 +279,12 @@ Rotas (fora de `/api`):
 - `POST /assinatura/{token}/aprovar`
 - `POST /assinatura/{token}/reprovar` (justificativa obrigatória)
 
-## Como testar o fluxo completo
+## Como testar o fluxo completo (sanity check)
 
 1. Subir app + db + worker da fila
-2. `db:seed` (para existir `users.id` do responsável)
-3. Criar signatários (`POST /cliente`)
-4. Criar processo (`POST /processo`) usando `responsible_user_id` válido
+2. **Registrar-se em `/`** (ou usar API com `User::factory` em ambiente de teste) para existir um `users.id` de responsável
+3. Criar signatários pela web em **`/signatarios`** ou via `POST /api/cliente` (com **Bearer** após `POST /api/login`)
+4. Criar processo pela web em **`/processos/criar`** ou via `POST /api/processo` com `responsible_user_id` = seu usuário (no Postman, use o `id` retornado em `/api/login`)
 5. Associar signatários ao processo (`POST /processo/{id}/signatarios`)
 6. Enviar convites (`POST /processo/{id}/convites`)
 7. Pegar URL do e-mail:
@@ -278,26 +298,17 @@ Rotas (fora de `/api`):
 
 ## Autenticação
 
-O projeto inclui rota padrão:
+- **Web (operador)**: login e cadastro na raiz `/` (sessão `web`). Painel em `/painel`. Logout pelo botão **Sair** nas telas.
+- **API REST** (`/api/...`): **`auth:sanctum`** em todas as rotas exceto `POST /api/login`. Use o token Bearer retornado pelo login em todas as chamadas (Postman: aba **Authorization → Bearer Token** ou header manual).
+- **`GET /api/user`**: retorna o usuário dono do token (requer header `Authorization`).
 
-- `GET /api/user` com `auth:sanctum`
+## Implementado
 
-Para o escopo atual do teste, os fluxos principais via Postman foram pensados para validação funcional **sem obrigar UI de login**, mas Sanctum pode ser habilitado/expandido.
-
-## Atual vs Final
-
-Implementado no momento:
-
-- Req. 1 signatários
-- Req. 2 processos + upload + associação + status mínimos (via policy de transição)
-- Req. 3 convites assíncronos + token + aprovação/reprovação + registros + histórico
-- Base de auditoria/histórico
-- Req. 4 dashboard + filtros + SLA/atrasados + relatórios (5)
-- Req. 6 camada de consultas analíticas + README de indicadores
-- Req. 7 export consolidado “datalake-like”
-- Req. 8 ampliar auditoria para todas ações relevantes + tela de detalhes
-
-Pendências:
-
-- Altercoes de fluxo e visuais para UX, pagina home e criacao de massa de dados
-- Implementacao de diferenciais
+- Req. **1** signatários
+- Req. **2** processos + upload + associação + status mínimos (via policy de transição)
+- Req. **3** convites assíncronos + token + aprovação/reprovação + registros + histórico
+- Req. **4** dashboard web + detalhe de processo
+- Req. **5** relatórios web + CSV
+- Req. **6** página `/analise` + camada de consultas analíticas (snapshot)
+- Req. **7** export consolidado “datalake-like” (`datalake:export` + tabela `processo_analytics_facts`)
+- Req. **8** auditoria ampliada nas rotas da API + listagem web `/auditoria` (filtros e paginação)

@@ -12,6 +12,7 @@
         <h1 class="h3 mb-0">Dashboard operacional</h1>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('processos.index') }}">Processos</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('signatarios.index') }}">Signatários</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index') }}">Auditoria</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
