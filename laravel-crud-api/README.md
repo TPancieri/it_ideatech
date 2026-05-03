@@ -89,6 +89,39 @@ php artisan queue:work --tries=1
 php artisan test
 ```
 
+## Export consolidado para BI / datalake (Req. 7)
+
+Este projeto inclui uma rotina de **consolidação analítica** que:
+
+- reconstrói a tabela **`processo_analytics_facts`** (uma linha por combinação **processo × signatário** na associação `cliente_processo`);
+- gera arquivos **JSON Lines** e **CSV** no disco **`local`** do Laravel.
+
+No Laravel 13 o disk `local` aponta para `storage/app/private`, então os exports ficam em:
+
+- `storage/app/private/datalake/`
+
+### Como gerar manualmente
+
+```bash
+php artisan datalake:export
+```
+
+Opções úteis:
+
+- `--format=jsonl,csv` (padrão: ambos)
+- `--skip-table` (gera só os arquivos, sem rebuild da tabela)
+- `--name=meu_snapshot` (nome base dos arquivos)
+
+### Agendamento
+
+O projeto registra um schedule diário em `bootstrap/app.php` (03:15) para rodar `datalake:export`. Em produção, use o scheduler do Laravel (`schedule:run`) conforme a documentação.
+
+### Como isso vira “datalake” na prática
+
+Os arquivos em `datalake/` são pensados para serem **copiados para um storage externo** (S3/GCS/Azure Blob) e ingeridos por pipelines (Airflow/DBT/Spark/Batch SQL) ou carregados direto em ferramentas de BI.
+
+Campos principais no dataset (CSV/JSONL): identificação do processo (`processo_id`, `titulo`, `categoria`, `status`, timestamps), dados do signatário (`signatario_*`, `sort_order`), convites (`convite_*`, `convites_enviados`), resposta (`tipo_resposta`, `resposta_em`, `tempo_resposta_em_horas`, `justificativa_reprovacao`) e responsável (`responsible_user_*`).
+
 ## Modelagem principal (resumo)
 
 ### Signatários
