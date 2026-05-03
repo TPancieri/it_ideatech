@@ -11,7 +11,12 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Relatório — Produtividade por signatário</h1>
         <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Dashboard</a>
+            <form action="{{ route('logout') }}" method="post" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-danger btn-sm">Sair</button>
+            </form>
             <a class="btn btn-outline-primary btn-sm"
                href="{{ route('reports.productivity.csv', ['from' => $from, 'to' => $to]) }}">Export CSV</a>
         </div>

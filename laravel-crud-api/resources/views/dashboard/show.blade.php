@@ -11,8 +11,13 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Processo #{{ $processo->id }}</h1>
         <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index', ['processo_id' => $processo->id]) }}">Auditoria (filtro)</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Voltar</a>
+            <form action="{{ route('logout') }}" method="post" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-danger btn-sm">Sair</button>
+            </form>
         </div>
     </div>
 

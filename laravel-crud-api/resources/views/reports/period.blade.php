@@ -13,7 +13,7 @@
         <div class="d-flex gap-2">
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Dashboard</a>
             <a class="btn btn-outline-primary btn-sm"
-            href="{{ route('reports.period.csv', ['grain' => $grain, 'from' => $from, 'to' => $to]) }}">Export CSV</a>
+               href="{{ route('reports.period.csv', ['grain' => $grain, 'from' => $from, 'to' => $to]) }}">Export CSV</a>
         </div>
     </div>
 

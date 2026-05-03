@@ -6,6 +6,7 @@ use App\Models\User;
 
 test('reports pages load', function () {
     $user = User::factory()->create();
+    $this->actingAs($user);
 
     $processo = Processo::query()->create([
         'title' => 'P',

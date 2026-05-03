@@ -39,7 +39,7 @@ class ClienteController extends Controller{
         AuditLogger::log(
             acao: 'cliente.criado',
             subject: $cliente,
-            actor: null,
+            actor: $request->user(),
             before: null,
             after: AuditLogger::clienteSnapshot($cliente),
             meta: ['via' => 'api'],
@@ -77,7 +77,7 @@ class ClienteController extends Controller{
         AuditLogger::log(
             acao: 'cliente.atualizado',
             subject: $cliente,
-            actor: null,
+            actor: $request->user(),
             before: $before,
             after: AuditLogger::clienteSnapshot($cliente),
             meta: ['via' => 'api'],
@@ -97,7 +97,7 @@ class ClienteController extends Controller{
         AuditLogger::log(
             acao: 'cliente.inativado',
             subject: $cliente,
-            actor: null,
+            actor: $request->user(),
             before: $before,
             after: AuditLogger::clienteSnapshot($cliente),
             meta: ['via' => 'api'],

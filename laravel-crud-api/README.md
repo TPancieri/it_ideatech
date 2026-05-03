@@ -43,10 +43,14 @@ docker exec -it crud-app php artisan migrate
 docker exec -it crud-app php artisan db:seed
 ```
 
-Seed padrão cria um usuário de teste:
+O `DatabaseSeeder` **não cria mais usuário fixo** por padrão: o operador deve **cadastrar-se na página inicial** (`/`) e usar esse usuário como **responsável** (`responsible_user_id`) nos processos. O seeder continua disponível para você adicionar dados opcionais (veja comentários em `database/seeders/DatabaseSeeder.php`).
 
-- email: `test@example.com`
-- senha: `password`
+### Acesso ao sistema (web + autenticação por sessão)
+
+1. Abra a raiz do site (ex.: `http://localhost:8000/`).
+2. Use o formulário **Cadastro** (nome, e-mail, senha) ou **Login** se já tiver conta.
+3. Após entrar, você cai no **Painel** (`/painel`) com links para Dashboard, Relatórios, Análise, Auditoria e **Signatários** (formulário web do Req. 1, substituindo o fluxo só via Postman para esse cadastro).
+4. Rotas web operacionais (dashboard, relatórios, `/analise`, `/auditoria`, signatários) exigem **usuário autenticado**. As rotas públicas de **assinatura por token** (`/assinatura/...`) continuam sem login.
 
 ### Worker da fila (obrigatório para processar Jobs)
 

@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('datalake:export')->dailyAt('03:15');
     })
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('painel'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

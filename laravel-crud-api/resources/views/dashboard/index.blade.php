@@ -11,9 +11,14 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Dashboard operacional</h1>
         <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('painel') }}">Painel</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('signatarios.index') }}">Signatários</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index') }}">Auditoria</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
-            <a class="btn btn-outline-secondary btn-sm" href="{{ url('/') }}">Home</a>
+            <form action="{{ route('logout') }}" method="post" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-danger btn-sm">Sair</button>
+            </form>
         </div>
     </div>
 

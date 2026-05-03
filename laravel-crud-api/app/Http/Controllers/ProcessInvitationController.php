@@ -40,7 +40,7 @@ class ProcessInvitationController extends Controller
         AuditLogger::log(
             acao: 'processo.convites_enfileirados',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: null,
             after: [
                 'ttl_hours' => $ttlHours,

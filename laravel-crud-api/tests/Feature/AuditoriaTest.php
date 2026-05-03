@@ -4,6 +4,7 @@ use App\Models\AuditoriaEvento;
 use App\Models\User;
 
 test('auditoria page loads', function () {
+    $this->actingAs(User::factory()->create());
     $this->get(route('auditoria.index'))->assertOk();
 });
 
@@ -21,6 +22,7 @@ test('creating cliente logs audit event', function () {
 
 test('creating processo logs audit event', function () {
     $user = User::factory()->create();
+    $this->actingAs($user);
 
     $this->postJson('/api/processo', [
         'title' => 'T',

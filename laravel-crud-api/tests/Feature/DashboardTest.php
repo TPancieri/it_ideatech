@@ -5,6 +5,7 @@ use App\Models\User;
 
 test('dashboard loads', function () {
     $user = User::factory()->create();
+    $this->actingAs($user);
 
     Processo::query()->create([
         'title' => 'P',

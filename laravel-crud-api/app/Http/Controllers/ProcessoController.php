@@ -45,7 +45,7 @@ class ProcessoController extends Controller
         AuditLogger::log(
             acao: 'processo.criado',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: null,
             after: AuditLogger::processoSnapshot($processo),
             meta: ['via' => 'api'],
@@ -104,7 +104,7 @@ class ProcessoController extends Controller
                 processo: $processo,
                 from: $beforeStatus,
                 to: $processo->status,
-                actor: null,
+                actor: $request->user(),
                 reason: null,
                 meta: [
                     'via' => 'api_update',
@@ -114,7 +114,7 @@ class ProcessoController extends Controller
             AuditLogger::log(
                 acao: 'processo.status_atualizado',
                 subject: $processo,
-                actor: null,
+                actor: $request->user(),
                 before: ['status' => $beforeStatus],
                 after: ['status' => $processo->status],
                 meta: [
@@ -128,7 +128,7 @@ class ProcessoController extends Controller
                 AuditLogger::log(
                     acao: 'processo.atualizado',
                     subject: $processo,
-                    actor: null,
+                    actor: $request->user(),
                     before: $beforeSnap,
                     after: $afterSnap,
                     meta: ['via' => 'api_update'],
@@ -145,7 +145,7 @@ class ProcessoController extends Controller
         AuditLogger::log(
             acao: 'processo.excluido',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: AuditLogger::processoSnapshot($processo),
             after: null,
             meta: ['via' => 'api_destroy'],
@@ -185,7 +185,7 @@ class ProcessoController extends Controller
         AuditLogger::log(
             acao: 'processo.documento_atualizado',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: ['document_path' => $beforePath],
             after: ['document_path' => $path],
             meta: ['via' => 'api_upload'],

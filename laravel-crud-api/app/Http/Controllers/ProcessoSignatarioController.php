@@ -48,7 +48,7 @@ class ProcessoSignatarioController extends Controller
         AuditLogger::log(
             acao: 'processo.signatario_vinculado',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: null,
             after: [
                 'cliente_id' => (int) $data['cliente_id'],
@@ -105,7 +105,7 @@ class ProcessoSignatarioController extends Controller
         AuditLogger::log(
             acao: 'processo.signatarios_sincronizados',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: ['signatarios' => $antes],
             after: ['signatarios' => $depois],
             meta: ['via' => 'api_signatarios_sync'],
@@ -120,7 +120,7 @@ class ProcessoSignatarioController extends Controller
         AuditLogger::log(
             acao: 'processo.signatario_desvinculado',
             subject: $processo,
-            actor: null,
+            actor: $request->user(),
             before: ['cliente_id' => $cliente->id],
             after: null,
             meta: ['via' => 'api_signatarios_destroy'],
