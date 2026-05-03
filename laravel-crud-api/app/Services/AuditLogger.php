@@ -3,11 +3,36 @@
 namespace App\Services;
 
 use App\Models\AuditoriaEvento;
+use App\Models\Cliente;
+use App\Models\Processo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 final class AuditLogger
 {
+    /**
+     * @return array<string, mixed>
+     */
+    public static function clienteSnapshot(Cliente $cliente): array
+    {
+        return $cliente->only(['name', 'email', 'role', 'sector', 'status']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function processoSnapshot(Processo $processo): array
+    {
+        return $processo->only([
+            'title',
+            'description',
+            'status',
+            'responsible_user_id',
+            'category',
+            'document_path',
+        ]);
+    }
+
     public static function log(
         string $acao,
         ?Model $subject = null,

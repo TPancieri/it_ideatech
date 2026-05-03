@@ -42,6 +42,16 @@ class ProcessoController extends Controller
 
         $processo = Processo::create($payload);
 
+        AuditLogger::log(
+            acao: 'processo.criado',
+            subject: $processo,
+            actor: null,
+            before: null,
+            after: AuditLogger::processoSnapshot($processo),
+            meta: ['via' => 'api'],
+            request: $request,
+        );
+
         return response()->json($processo, 201);
     }
 
@@ -53,6 +63,7 @@ class ProcessoController extends Controller
     public function update(Request $request, Processo $processo)
     {
         $beforeStatus = $processo->status;
+        $beforeSnap = AuditLogger::processoSnapshot($processo);
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
@@ -111,13 +122,36 @@ class ProcessoController extends Controller
                 ],
                 request: $request,
             );
+        } else {
+            $afterSnap = AuditLogger::processoSnapshot($processo);
+            if ($beforeSnap != $afterSnap) {
+                AuditLogger::log(
+                    acao: 'processo.atualizado',
+                    subject: $processo,
+                    actor: null,
+                    before: $beforeSnap,
+                    after: $afterSnap,
+                    meta: ['via' => 'api_update'],
+                    request: $request,
+                );
+            }
         }
 
         return response()->json($processo, 200);
     }
 
-    public function destroy(Processo $processo)
+    public function destroy(Request $request, Processo $processo)
     {
+        AuditLogger::log(
+            acao: 'processo.excluido',
+            subject: $processo,
+            actor: null,
+            before: AuditLogger::processoSnapshot($processo),
+            after: null,
+            meta: ['via' => 'api_destroy'],
+            request: $request,
+        );
+
         $processo->delete();
         return response()->json(null, 204);
     }
@@ -137,6 +171,8 @@ class ProcessoController extends Controller
 
         $disk = 'public';
 
+        $beforePath = $processo->document_path;
+
         if ($processo->document_path) {
             Storage::disk($disk)->delete($processo->document_path);
         }
@@ -145,6 +181,16 @@ class ProcessoController extends Controller
 
         $processo->document_path = $path;
         $processo->save();
+
+        AuditLogger::log(
+            acao: 'processo.documento_atualizado',
+            subject: $processo,
+            actor: null,
+            before: ['document_path' => $beforePath],
+            after: ['document_path' => $path],
+            meta: ['via' => 'api_upload'],
+            request: $request,
+        );
 
         return response()->json($processo, 200);
     }

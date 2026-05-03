@@ -100,6 +100,8 @@ No Laravel 13 o disk `local` aponta para `storage/app/private`, então os export
 
 - `storage/app/private/datalake/`
 
+**Após puxar o código ou adicionar migrations novas**, rode as migrations no ambiente que aponta para o banco (ex.: `docker exec -it crud-app php artisan migrate`). Sem a tabela `processo_analytics_facts`, o comando `datalake:export` falha ao reconstruir o dataset (use `--skip-table` só se quiser gerar arquivos sem atualizar a tabela).
+
 ### Como gerar manualmente
 
 ```bash
@@ -121,6 +123,12 @@ O projeto registra um schedule diário em `bootstrap/app.php` (03:15) para rodar
 Os arquivos em `datalake/` são pensados para serem **copiados para um storage externo** (S3/GCS/Azure Blob) e ingeridos por pipelines (Airflow/DBT/Spark/Batch SQL) ou carregados direto em ferramentas de BI.
 
 Campos principais no dataset (CSV/JSONL): identificação do processo (`processo_id`, `titulo`, `categoria`, `status`, timestamps), dados do signatário (`signatario_*`, `sort_order`), convites (`convite_*`, `convites_enviados`), resposta (`tipo_resposta`, `resposta_em`, `tempo_resposta_em_horas`, `justificativa_reprovacao`) e responsável (`responsible_user_*`).
+
+## Auditoria (Req. 8)
+
+- **Tabela** `auditoria_eventos` (ação, subject/actor polimórficos, `before`/`after`/`meta` em JSON, IP e user-agent).
+- **APIs instrumentadas** (além do que já existia no fluxo de assinatura e jobs de convite): cadastro/edição/inativação de signatário; criação/edição/exclusão de processo; alteração de documento; vínculo/sync/remoção de signatários; enfileiramento de convites (`POST /processo/{id}/convites`).
+- **Telas**: listagem global com filtros em `GET /auditoria`; no detalhe do processo (`/dashboard/processo/{id}`) continuam os eventos cujo **subject** é aquele processo, com atalho para a listagem filtrada por `processo_id`.
 
 ## Modelagem principal (resumo)
 
@@ -282,8 +290,10 @@ Implementado no momento:
 - Base de auditoria/histórico
 - Req. 4 dashboard + filtros + SLA/atrasados + relatórios (5)
 - Req. 6 camada de consultas analíticas + README de indicadores
+- Req. 7 export consolidado “datalake-like”
+- Req. 8 ampliar auditoria para todas ações relevantes + tela de detalhes
 
 Pendências:
 
-- Req. 7 export consolidado “datalake-like”
-- Req. 8 ampliar auditoria para todas ações relevantes + tela de detalhes
+- Altercoes de fluxo e visuais para UX, pagina home e criacao de massa de dados
+- Implementacao de diferenciais

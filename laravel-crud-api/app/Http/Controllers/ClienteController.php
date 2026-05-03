@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,11 +30,21 @@ class ClienteController extends Controller{
                 'errors' => $validator->errors(),
             ], 422);
         }
-        # $cliente = Cliente::create($validator->validated());
+
         $payload = $validator->validated();
         $payload['status'] = $payload['status'] ?? 'active';
+
         $cliente = Cliente::create($payload);
 
+        AuditLogger::log(
+            acao: 'cliente.criado',
+            subject: $cliente,
+            actor: null,
+            before: null,
+            after: AuditLogger::clienteSnapshot($cliente),
+            meta: ['via' => 'api'],
+            request: $request,
+        );
 
         return response()->json($cliente,201);
     }
@@ -57,19 +68,42 @@ class ClienteController extends Controller{
                 'errors' => $validator->errors(),
             ], 422);
         }
-        $cliente->update($validator->validated());
 
+        $before = AuditLogger::clienteSnapshot($cliente);
+
+        $cliente->update($validator->validated());
+        $cliente->refresh();
+
+        AuditLogger::log(
+            acao: 'cliente.atualizado',
+            subject: $cliente,
+            actor: null,
+            before: $before,
+            after: AuditLogger::clienteSnapshot($cliente),
+            meta: ['via' => 'api'],
+            request: $request,
+        );
 
         return response()->json($cliente,200);
     }
 
-    public function destroy(Cliente $cliente){
-        #$cliente->delete();
+    public function destroy(Request $request, Cliente $cliente){
+        $before = AuditLogger::clienteSnapshot($cliente);
 
         $cliente->status = 'inactive';
         $cliente->save();
+        $cliente->refresh();
+
+        AuditLogger::log(
+            acao: 'cliente.inativado',
+            subject: $cliente,
+            actor: null,
+            before: $before,
+            after: AuditLogger::clienteSnapshot($cliente),
+            meta: ['via' => 'api'],
+            request: $request,
+        );
 
         return response()->json($cliente, 200);
-        #return response()->json(null, 204);
     }
 }

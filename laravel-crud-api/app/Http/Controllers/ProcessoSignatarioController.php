@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\Processo;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -44,6 +45,19 @@ class ProcessoSignatarioController extends Controller
             'sort_order' => $sortOrder,
         ]);
 
+        AuditLogger::log(
+            acao: 'processo.signatario_vinculado',
+            subject: $processo,
+            actor: null,
+            before: null,
+            after: [
+                'cliente_id' => (int) $data['cliente_id'],
+                'sort_order' => $sortOrder,
+            ],
+            meta: ['via' => 'api_signatarios_store'],
+            request: $request,
+        );
+
         return response()->json($processo->signatarios()->get(), 201);
     }
 
@@ -73,15 +87,46 @@ class ProcessoSignatarioController extends Controller
             })
             ->all();
 
+        $antes = $processo->signatarios()->get()->map(fn (Cliente $c): array => [
+            'cliente_id' => $c->id,
+            'sort_order' => (int) $c->pivot->sort_order,
+        ])->values()->all();
+
         DB::transaction(function () use ($processo, $rows): void {
             $processo->signatarios()->sync($rows);
         });
 
+        $processo->load('signatarios');
+        $depois = $processo->signatarios->map(fn (Cliente $c): array => [
+            'cliente_id' => $c->id,
+            'sort_order' => (int) $c->pivot->sort_order,
+        ])->values()->all();
+
+        AuditLogger::log(
+            acao: 'processo.signatarios_sincronizados',
+            subject: $processo,
+            actor: null,
+            before: ['signatarios' => $antes],
+            after: ['signatarios' => $depois],
+            meta: ['via' => 'api_signatarios_sync'],
+            request: $request,
+        );
+
         return response()->json($processo->signatarios()->get(), 200);
     }
 
-    public function destroy(Processo $processo, Cliente $cliente)
+    public function destroy(Request $request, Processo $processo, Cliente $cliente)
     {
+        AuditLogger::log(
+            acao: 'processo.signatario_desvinculado',
+            subject: $processo,
+            actor: null,
+            before: ['cliente_id' => $cliente->id],
+            after: null,
+            meta: ['via' => 'api_signatarios_destroy'],
+            request: $request,
+        );
+
         $processo->signatarios()->detach($cliente->id);
 
         return response()->json(null, 204);

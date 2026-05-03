@@ -12,6 +12,7 @@
         <h1 class="h3 mb-0">Análise de dados (Req. 6)</h1>
         <div class="d-flex gap-2">
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Dashboard</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index') }}">Auditoria</a>
             <a class="btn btn-outline-secondary btn-sm" href="{{ route('reports.status') }}">Relatórios</a>
         </div>
     </div>

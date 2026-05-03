@@ -5,6 +5,7 @@ use App\Http\Controllers\ProcessAssinaturaWebController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\AuditoriaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,3 +31,5 @@ Route::get('/relatorios/reprovacoes', [ReportsController::class, 'rejections'])-
 Route::get('/relatorios/reprovacoes.csv', [ReportsController::class, 'rejectionsCsv'])->name('reports.rejections.csv');
 
 Route::get('/analise', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');

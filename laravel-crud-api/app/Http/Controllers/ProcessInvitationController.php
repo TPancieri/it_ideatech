@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\SendProcessSignatureInviteJob;
 use App\Models\Processo;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -35,6 +36,20 @@ class ProcessInvitationController extends Controller
         foreach ($clienteIds as $clienteId) {
             SendProcessSignatureInviteJob::dispatch($processo->id, (int) $clienteId, $ttlHours);
         }
+
+        AuditLogger::log(
+            acao: 'processo.convites_enfileirados',
+            subject: $processo,
+            actor: null,
+            before: null,
+            after: [
+                'ttl_hours' => $ttlHours,
+                'signatario_ids' => $clienteIds->values()->all(),
+                'jobs' => $clienteIds->count(),
+            ],
+            meta: ['via' => 'api_convites'],
+            request: $request,
+        );
 
         return response()->json([
             'message' => 'Convites enfileirados.',

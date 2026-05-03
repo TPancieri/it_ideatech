@@ -10,7 +10,10 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">Processo #{{ $processo->id }}</h1>
-        <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Voltar</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('auditoria.index', ['processo_id' => $processo->id]) }}">Auditoria (filtro)</a>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.index') }}">Voltar</a>
+        </div>
     </div>
 
     <div class="card shadow-sm mb-4">
@@ -103,7 +106,10 @@
     </div>
 
     <div class="card shadow-sm mt-3">
-        <div class="card-header">Auditoria (eventos ligados a este processo)</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Auditoria (eventos com este processo como subject)</span>
+            <a class="btn btn-sm btn-outline-primary" href="{{ route('auditoria.index', ['processo_id' => $processo->id]) }}">Listagem completa</a>
+        </div>
         <div class="card-body">
             @if ($auditoria->isEmpty())
                 <div class="text-muted">Sem auditoria registrada.</div>
