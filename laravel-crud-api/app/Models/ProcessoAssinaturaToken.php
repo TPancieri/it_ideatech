@@ -7,10 +7,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProcessoAssinaturaToken extends Model
 {
+    /**
+     * @var list<string>
+     */
+    protected $hidden = [
+        'invite_plain_ciphertext',
+    ];
+
     protected $fillable = [
         'processo_id',
         'cliente_id',
         'token_hash',
+        'invite_plain_ciphertext',
         'expires_at',
         'consumed_at',
     ];

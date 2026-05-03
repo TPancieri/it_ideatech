@@ -19,6 +19,25 @@
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
+                    <h2 class="h6">Processos (Req. 2)</h2>
+                    <p class="small text-muted mb-3">Criar processo, anexar documento e vincular signatários pela interface.</p>
+                    <a class="btn btn-primary btn-sm me-1" href="{{ route('processos.create') }}">Novo processo</a>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ route('processos.index') }}">Meus processos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6">Fluxo de assinatura (Req. 3)</h2>
+                    <p class="small text-muted mb-3">Convites, links para aprovar/reprovar na web pública e ordem paralela ou sequencial.</p>
+                    <a class="btn btn-primary btn-sm" href="{{ route('fluxo.index') }}">Abrir fluxo</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
                     <h2 class="h6">Dashboard (Req. 4)</h2>
                     <p class="small text-muted mb-3">Indicadores e lista de processos.</p>
                     <a class="btn btn-primary btn-sm" href="{{ route('dashboard.index') }}">Abrir dashboard</a>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cliente;
 use App\Models\Processo;
 use App\Models\ProcessoAssinaturaToken;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 final class ProcessSigningTokenService
@@ -18,6 +19,7 @@ final class ProcessSigningTokenService
             'processo_id' => $processo->id,
             'cliente_id' => $cliente->id,
             'token_hash' => $hash,
+            'invite_plain_ciphertext' => Crypt::encryptString($plain),
             'expires_at' => now()->addHours($ttlHours),
         ]);
 

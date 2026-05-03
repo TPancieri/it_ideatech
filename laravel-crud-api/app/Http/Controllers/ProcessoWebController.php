@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendProcessSignatureInviteJob;
 use App\Models\Cliente;
 use App\Models\Processo;
 use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -74,6 +76,30 @@ class ProcessoWebController extends Controller
 
         $processo->refresh();
 
+        $clienteIds = $processo->signatarios()->pluck('clientes.id');
+        $enviarConvites = ! $request->boolean('sem_convites');
+
+        if ($enviarConvites && $clienteIds->isNotEmpty()) {
+            $ttlHours = 72;
+            foreach ($clienteIds as $clienteId) {
+                Bus::dispatchSync(new SendProcessSignatureInviteJob($processo->id, (int) $clienteId, $ttlHours));
+            }
+
+            AuditLogger::log(
+                acao: 'processo.convites_enfileirados',
+                subject: $processo,
+                actor: $request->user(),
+                before: null,
+                after: [
+                    'ttl_hours' => $ttlHours,
+                    'signatario_ids' => $clienteIds->values()->all(),
+                    'jobs' => $clienteIds->count(),
+                ],
+                meta: ['via' => 'web_processos_criacao'],
+                request: $request,
+            );
+        }
+
         AuditLogger::log(
             acao: 'processo.criado',
             subject: $processo,
@@ -84,6 +110,11 @@ class ProcessoWebController extends Controller
             request: $request,
         );
 
-        return redirect()->route('processos.index')->with('success', 'Processo criado com sucesso.');
+        $message = 'Processo criado com sucesso.';
+        if ($enviarConvites && $clienteIds->isNotEmpty()) {
+            $message .= ' Convites enviados na hora para '.$clienteIds->count().' signatário(s) (tokens e e-mail na mesma requisição).';
+        }
+
+        return redirect()->route('processos.index')->with('success', $message);
     }
 }

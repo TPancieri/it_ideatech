@@ -30,13 +30,18 @@
                         <td>{{ $p->category }}</td>
                         <td><span class="badge text-bg-secondary">{{ $p->status }}</span></td>
                         <td class="small">{{ $p->document_path ? 'Sim' : '—' }}</td>
-                        <td>
+                        <td class="d-flex flex-wrap gap-1">
                             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.show', $p) }}">Detalhe</a>
+                            <a class="btn btn-outline-primary btn-sm" href="{{ route('fluxo.show', $p) }}">Fluxo</a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-muted p-4">Nenhum processo ainda. Crie o primeiro.</td>
+                        <td colspan="6" class="text-muted p-4">
+                            Nenhum processo em que você é o <strong>responsável</strong>.
+                            Processos criados antes pela API/Postman usam o <code>responsible_user_id</code> que foi enviado naquela hora (outro usuário ou outro id) e por isso não aparecem aqui.
+                            O <strong>Dashboard</strong> lista processos de forma mais ampla para acompanhamento operacional.
+                        </td>
                     </tr>
                 @endforelse
                 </tbody>

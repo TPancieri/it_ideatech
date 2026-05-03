@@ -6,6 +6,7 @@ use App\Jobs\SendProcessSignatureInviteJob;
 use App\Models\Processo;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Validator;
 
 class ProcessInvitationController extends Controller
@@ -34,7 +35,7 @@ class ProcessInvitationController extends Controller
         }
 
         foreach ($clienteIds as $clienteId) {
-            SendProcessSignatureInviteJob::dispatch($processo->id, (int) $clienteId, $ttlHours);
+            Bus::dispatchSync(new SendProcessSignatureInviteJob($processo->id, (int) $clienteId, $ttlHours));
         }
 
         AuditLogger::log(
@@ -52,8 +53,8 @@ class ProcessInvitationController extends Controller
         );
 
         return response()->json([
-            'message' => 'Convites enfileirados.',
+            'message' => 'Convites enviados (processados na hora).',
             'signatarios' => $clienteIds->count(),
-        ], 202);
+        ], 200);
     }
 }

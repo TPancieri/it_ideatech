@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="h3 mb-4">Novo processo digital</h1>
-    <p class="text-muted small mb-4">Você será registrado como <strong>responsável</strong> automaticamente. Status inicial: <code>pending</code>. Opcional: documento (PDF ou imagem) e signatários ativos.</p>
+    <p class="text-muted small mb-4">Você será registrado como <strong>responsável</strong> automaticamente. Status inicial: <code>pending</code>. Opcional: documento (PDF ou imagem) e signatários ativos. Se marcar signatários, os <strong>convites por e-mail são enviados ao salvar</strong> (tokens e e-mail na mesma requisição).</p>
 
     <div class="card shadow-sm" style="max-width: 720px;">
         <div class="card-body">
@@ -33,11 +33,11 @@
                 </div>
                 <div class="mb-3">
                     <div class="form-label">Signatários (opcional)</div>
-                    <p class="small text-muted">Apenas signatários <strong>ativos</strong>. Ordem inicial em modo paralelo (<code>sort_order = 0</code>); ajuste fino pode ser feito pela API.</p>
+                    <p class="small text-muted">Apenas signatários <strong>ativos</strong>. Ordem inicial em modo paralelo (<code>sort_order = 0</code>); ajuste em <a href="{{ route('fluxo.index') }}">Fluxo de assinatura</a> após criar.</p>
                     @forelse ($clientes as $c)
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="signatarios[]" value="{{ $c->id }}" id="sig_{{ $c->id }}"
-                                @checked(collect(old('signatarios', []))->contains((string) $c->id))>
+                                   @checked(collect(old('signatarios', []))->contains((string) $c->id))>
                             <label class="form-check-label" for="sig_{{ $c->id }}">{{ $c->name }} — {{ $c->email }}</label>
                         </div>
                     @empty
@@ -45,6 +45,10 @@
                     @endforelse
                     @error('signatarios')<div class="text-danger small">{{ $message }}</div>@enderror
                     @error('signatarios.*')<div class="text-danger small">{{ $message }}</div>@enderror
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" name="sem_convites" id="sem_convites" value="1" @checked(old('sem_convites'))>
+                        <label class="form-check-label small" for="sem_convites">Não enviar convites agora (só vincular signatários; disparo manual depois na página de fluxo)</label>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Criar processo</button>
                 <a class="btn btn-outline-secondary" href="{{ route('processos.index') }}">Cancelar</a>

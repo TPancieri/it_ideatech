@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FluxoAssinaturaWebController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PainelController;
 use App\Http\Controllers\ProcessAssinaturaWebController;
@@ -40,6 +41,13 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/processos', [ProcessoWebController::class, 'index'])->name('processos.index');
     Route::get('/processos/criar', [ProcessoWebController::class, 'create'])->name('processos.create');
     Route::post('/processos', [ProcessoWebController::class, 'store'])->name('processos.store');
+
+    Route::get('/fluxo-assinatura', [FluxoAssinaturaWebController::class, 'index'])->name('fluxo.index');
+    Route::get('/processos/{processo}/fluxo-assinatura', [FluxoAssinaturaWebController::class, 'show'])->name('fluxo.show');
+    Route::post('/processos/{processo}/fluxo-assinatura/convites', [FluxoAssinaturaWebController::class, 'convitesStore'])->name('fluxo.convites');
+    Route::post('/processos/{processo}/fluxo-assinatura/link', [FluxoAssinaturaWebController::class, 'linkGerar'])->name('fluxo.link');
+    Route::post('/processos/{processo}/fluxo-assinatura/tokens/{assinaturaToken}/revelar', [FluxoAssinaturaWebController::class, 'revelarLink'])->name('fluxo.revelar');
+    Route::post('/processos/{processo}/fluxo-assinatura/ordem', [FluxoAssinaturaWebController::class, 'ordemUpdate'])->name('fluxo.ordem');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/processo/{processo}', [DashboardController::class, 'show'])->name('dashboard.show');
