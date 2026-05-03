@@ -4,6 +4,8 @@ Este repositório implementa uma API em **Laravel** para cadastro de **signatár
 
 > Ajuste host/porta conforme seu Docker ou ambiente local. **Não há usuário/senha fixos:** cadastre-se na página inicial (`/`).
 
+> **Validação local feita em:** Windows 10, PHP 8.5, SQLite, sem Docker
+
 ## Rodar com Docker depois do `git clone`
 
 Na pasta do repositório (onde está o `docker-compose.yml`). O container da app chama-se **`crud-app`** (veja `container_name` no compose).
@@ -172,7 +174,6 @@ docker exec -it crud-app php artisan storage:link
 
 **Fila:** no `.env.example` actual, `QUEUE_CONNECTION=sync` evita precisar de segundo terminal com `queue:work`. Se mudar para `database`, usa no outro terminal: `php artisan queue:work --tries=1`.
 
-> **Validação local:** Windows 10, PHP 8.5, SQLite, sem Docker
 
 ## Testes automatizados
 
