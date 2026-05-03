@@ -12,6 +12,8 @@ class DashboardController extends Controller
 {
     public function index(Request $request, DashboardQueryService $queries): View
     {
+        $userId = (int) $request->user()->id;
+
         $filters = [
             'status' => $request->string('status')->toString() ?: null,
             'category' => $request->string('category')->toString() ?: null,
@@ -20,26 +22,28 @@ class DashboardController extends Controller
             'to' => $request->date('to')?->format('Y-m-d'),
         ];
 
-        $summary = $queries->summary();
+        $summary = $queries->summary($userId);
 
         $olderThanDays = (int) ($request->integer('overdue_days') ?: 7);
-        $overdue = $queries->overduePending($olderThanDays);
+        $overdue = $queries->overduePending($userId, $olderThanDays);
 
-        $processos = $queries->filteredProcesses($filters)->limit(200)->get();
+        $processos = $queries->filteredProcesses($userId, $filters)->limit(200)->get();
 
         return view('dashboard.index', [
             'summary' => $summary,
             'filters' => $filters,
-            'categories' => $queries->categories(),
-            'signatarios' => $queries->signatariosOptions(),
+            'categories' => $queries->categories($userId),
+            'signatarios' => $queries->signatariosOptions($userId),
             'overdueDays' => $olderThanDays,
             'overdue' => $overdue,
             'processos' => $processos,
         ]);
     }
 
-    public function show(Processo $processo): View
+    public function show(Request $request, Processo $processo): View
     {
+        $this->authorize('view', $processo);
+
         $processo->load([
             'responsibleUser:id,name,email',
             'signatarios:id,name,email,role,sector,status',

@@ -10,13 +10,20 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProcessoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $processos = Processo::query()->orderByDesc('id')->get();
+        $this->authorize('viewAny', Processo::class);
+
+        $processos = Processo::query()
+            ->where('responsible_user_id', $request->user()->id)
+            ->orderByDesc('id')
+            ->get();
+
         return response()->json($processos);
     }
 
@@ -25,7 +32,7 @@ class ProcessoController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'responsible_user_id' => 'required|integer|exists:users,id',
+            'responsible_user_id' => ['required', 'integer', 'exists:users,id', Rule::in([(int) $request->user()->id])],
             'category' => 'required|string|max:255',
         ]);
 
@@ -57,11 +64,15 @@ class ProcessoController extends Controller
 
     public function show(Processo $processo)
     {
+        $this->authorize('view', $processo);
+
         return response()->json($processo);
     }
 
     public function update(Request $request, Processo $processo)
     {
+        $this->authorize('update', $processo);
+
         $beforeStatus = $processo->status;
         $beforeSnap = AuditLogger::processoSnapshot($processo);
 
@@ -69,7 +80,7 @@ class ProcessoController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'status' => 'sometimes|in:pending,in_approval,approved,rejected,canceled',
-            'responsible_user_id' => 'required|integer|exists:users,id',
+            'responsible_user_id' => ['required', 'integer', 'exists:users,id', Rule::in([(int) $request->user()->id])],
             'category' => 'required|string|max:255',
         ]);
 
@@ -81,6 +92,7 @@ class ProcessoController extends Controller
         }
 
         $data = $validator->validated();
+        $data['responsible_user_id'] = (int) $request->user()->id;
         $nextStatus = $data['status'] ?? $processo->status;
 
         $message = ProcessoStatusPolicy::validateTransition($processo->status, $nextStatus);
@@ -142,6 +154,8 @@ class ProcessoController extends Controller
 
     public function destroy(Request $request, Processo $processo)
     {
+        $this->authorize('delete', $processo);
+
         AuditLogger::log(
             acao: 'processo.excluido',
             subject: $processo,
@@ -158,6 +172,8 @@ class ProcessoController extends Controller
 
     public function uploadDocument(Request $request, Processo $processo)
     {
+        $this->authorize('uploadDocument', $processo);
+
         $validator = Validator::make($request->all(), [
             'document' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:10240',
         ]);
@@ -197,6 +213,8 @@ class ProcessoController extends Controller
 
     public function showDocument(Processo $processo): BinaryFileResponse|JsonResponse
     {
+        $this->authorize('view', $processo);
+
         if (! $processo->document_path) {
             return response()->json([
                 'message' => 'No document uploaded for this processo.',

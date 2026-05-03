@@ -75,7 +75,7 @@
             <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <h2 class="h6">API REST</h2>
-                    <p class="small text-muted mb-3">Processos, convites e fluxo continuam em <code>/api/...</code> (Postman ou cliente HTTP).</p>
+                    <p class="small text-muted mb-3">Rotas em <code>/api/...</code> (Postman). Documentação: arquivo <code>docs/API_REST.md</code> no projeto (login Bearer, CRUD processo, convites <strong>202</strong> assíncronos).</p>
                     <span class="badge text-bg-secondary">Base: /api</span>
                 </div>
             </div>

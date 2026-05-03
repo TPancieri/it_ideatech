@@ -9,16 +9,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportsController extends Controller
 {
-    public function status(ReportsQueryService $reports): View
+    public function status(Request $request, ReportsQueryService $reports): View
     {
-        $rows = $reports->processesByStatus();
+        $rows = $reports->processesByStatus((int) $request->user()->id);
 
         return view('reports.status', [
             'rows' => $rows,
         ]);
     }
 
-    public function statusCsv(ReportsQueryService $reports): StreamedResponse
+    public function statusCsv(Request $request, ReportsQueryService $reports): StreamedResponse
     {
         $rows = $reports->processesByStatus();
 
@@ -34,7 +34,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->productivityBySignatario($from, $to);
+        $rows = $reports->productivityBySignatario((int) $request->user()->id, $from, $to);
 
         return view('reports.productivity', [
             'rows' => $rows,
@@ -48,7 +48,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->productivityBySignatario($from, $to);
+        $rows = $reports->productivityBySignatario((int) $request->user()->id, $from, $to);
 
         return $this->csvStream('relatorio_produtividade_signatarios.csv', [
             'cliente_id',
@@ -77,7 +77,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->processesByPeriod($grain, $from, $to);
+        $rows = $reports->processesByPeriod((int) $request->user()->id, $grain, $from, $to);
 
         return view('reports.period', [
             'rows' => $rows,
@@ -97,7 +97,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->processesByPeriod($grain, $from, $to);
+        $rows = $reports->processesByPeriod((int) $request->user()->id, $grain, $from, $to);
 
         return $this->csvStream('relatorio_processos_por_periodo.csv', ['period', 'created', 'concluded'], array_map(fn ($r) => [
             $r['period'],
@@ -111,7 +111,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->rejectionsReport($from, $to);
+        $rows = $reports->rejectionsReport((int) $request->user()->id, $from, $to);
 
         return view('reports.rejections', [
             'rows' => $rows,
@@ -125,7 +125,7 @@ class ReportsController extends Controller
         $from = $request->date('from');
         $to = $request->date('to');
 
-        $rows = $reports->rejectionsReport($from, $to);
+        $rows = $reports->rejectionsReport((int) $request->user()->id, $from, $to);
 
         return $this->csvStream('relatorio_reprovacoes.csv', [
             'processo_id',

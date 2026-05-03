@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/processos', [ProcessoWebController::class, 'index'])->name('processos.index');
     Route::get('/processos/criar', [ProcessoWebController::class, 'create'])->name('processos.create');
     Route::post('/processos', [ProcessoWebController::class, 'store'])->name('processos.store');
+    Route::get('/processos/{processo}/editar', [ProcessoWebController::class, 'edit'])->name('processos.edit');
+    Route::put('/processos/{processo}', [ProcessoWebController::class, 'update'])->name('processos.update');
+    Route::delete('/processos/{processo}', [ProcessoWebController::class, 'destroy'])->name('processos.destroy');
 
     Route::get('/fluxo-assinatura', [FluxoAssinaturaWebController::class, 'index'])->name('fluxo.index');
     Route::get('/processos/{processo}/fluxo-assinatura', [FluxoAssinaturaWebController::class, 'show'])->name('fluxo.show');

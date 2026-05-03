@@ -4,7 +4,7 @@
 
 @section('content')
     <h1 class="h3 mb-4">Novo processo digital</h1>
-    <p class="text-muted small mb-4">Você será registrado como <strong>responsável</strong> automaticamente. Status inicial: <code>pending</code>. Opcional: documento (PDF ou imagem) e signatários ativos. Se marcar signatários, os <strong>convites por e-mail são enviados ao salvar</strong> (tokens e e-mail na mesma requisição).</p>
+    <p class="text-muted small mb-4">Você será registrado como <strong>responsável</strong> automaticamente. Status inicial: <code>pending</code>. Opcional: documento (PDF ou imagem) e signatários ativos. Se marcar signatários, os <strong>convites são enfileirados</strong> (<code>SendProcessSignatureInviteJob</code>); com fila em <code>database</code>/<code>redis</code> rode <code>php artisan queue:work</code>.</p>
 
     <div class="card shadow-sm" style="max-width: 720px;">
         <div class="card-body">

@@ -1,6 +1,6 @@
 # Laravel CRUD API — Trilha de Assinatura Digital (Teste Prático)
 
-Este repositório implementa uma API em **Laravel** para cadastro de **signatários**, gestão de **processos digitais**, **upload de documentos**, **associação de signatários**, **convites por e-mail** (disparados **na mesma requisição HTTP** via `Bus::dispatchSync` + job `SendProcessSignatureInviteJob`), e **aprovação/reprovação por link com token** (com registros de histórico e auditoria).
+Este repositório implementa uma API em **Laravel** para cadastro de **signatários**, gestão de **processos digitais**, **upload de documentos**, **associação de signatários**, **convites por e-mail via job assíncrono** (`SendProcessSignatureInviteJob` enfileirado; atende o item **3.2** do PDF do teste), e **aprovação/reprovação por link com token** (com registros de histórico e auditoria). Documentação dos endpoints: [`docs/API_REST.md`](docs/API_REST.md).
 
 > Observação: este README foi escrito para cobrir os itens típicos de entrega do teste (instalação, migrations/seeders, filas/jobs, como testar o fluxo). Ajuste host/porta conforme seu Docker/local.
 
@@ -19,6 +19,19 @@ Quando você **atualiza o repositório** (pull) neste estado do projeto:
 1. Rode **`composer install`** na pasta do projeto (ou `composer update` se estiver gerenciando versões). Isso baixa o Sanctum porque ele já está no `composer.lock` — **não é obrigatório** repetir `composer require laravel/sanctum` no dia a dia.
 2. Rode **`php artisan migrate`** para criar a tabela `personal_access_tokens` (migration já versionada em `database/migrations/`).
 3. **`php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"`** só é necessário se você estiver num **clone antigo** que ainda **não** tenha os arquivos publicados (`config/sanctum.php` + migration de tokens). Neste repositório esses arquivos **já foram incluídos**; quem só dá `git pull` + `composer install` + `migrate` não precisa publicar de novo.
+
+## Avaliador: primeiro uso após clonar do GitHub
+
+1. **Clone** o repositório e entre na pasta: `git clone …` e `cd laravel-crud-api`.
+2. **Docker (recomendado):** na raiz do projeto, `docker compose up -d --build`. Ajuste o nome do serviço da app no `docker-compose.yml` se for diferente de `crud-app` (os comandos abaixo usam `crud-app` como exemplo).
+3. **`.env`:** o compose costuma montar o `.env` da sua máquina. Se não existir, copie `cp .env.example .env` **no host** e rode `php artisan key:generate` dentro do container. Confira `APP_URL` (ex.: `http://localhost:8000`), credenciais de **DB** alinhadas ao `docker-compose.yml`, `QUEUE_CONNECTION=database` (ou `sync` só para testar sem worker) e `MAIL_MAILER=log` para ver convites no log.
+4. **Migrations + link de storage:**  
+   `docker exec -it crud-app php artisan migrate`  
+   `docker exec -it crud-app php artisan storage:link` (upload de documentos / URLs públicas).
+5. **Fila:** em terminal separado, `docker exec -it crud-app php artisan queue:work --tries=1` — **obrigatório** para processar convites se `QUEUE_CONNECTION` não for `sync`.
+6. **Abrir** `APP_URL` no navegador → **cadastro** na home → **Painel** → criar signatários e processos. Não há usuário fixo no seeder; use o formulário de cadastro.
+7. **Testes:** `docker exec -it crud-app php artisan test`.
+8. **Se algo falhar:** confira se a porta do host não conflita, se o container `db` está healthy, se `DB_HOST` dentro do container é o nome do serviço (`db`) e não `127.0.0.1`, e se o worker da fila está ativo ao testar e-mails de convite.
 
 ## Como rodar (Docker — recomendado)
 
@@ -61,7 +74,7 @@ O `DatabaseSeeder` **não cria mais usuário fixo** por padrão: o operador deve
 3. Após entrar, você cai no **Painel** (`/painel`) com links para Dashboard, Relatórios, Análise, Auditoria, **Signatários** e **Processos** (formulários web que substituem parte do fluxo só via Postman).
 4. Rotas web operacionais (dashboard, relatórios, `/analise`, `/auditoria`, signatários, processos) exigem **usuário autenticado**. As rotas públicas de **assinatura por token** (`/assinatura/...`) continuam sem login.
 
-### Worker da fila (outros jobs; convites já são síncronos)
+### Worker da fila (**obrigatório** para convites com `QUEUE_CONNECTION=database|redis`)
 
 Em outro terminal:
 
@@ -69,9 +82,9 @@ Em outro terminal:
 docker exec -it crud-app php artisan queue:work --tries=1
 ```
 
-**Convites / e-mails de assinatura:** o projeto usa `Bus::dispatchSync` para `SendProcessSignatureInviteJob`, portanto **não** ficam presos na tabela `jobs` por esse fluxo. Mantenha `queue:work` se adicionar outros jobs enfileirados (relatórios pesados, notificações em massa, etc.).
+**Convites (Req. 3.2 — assíncrono):** `POST /api/processo/{id}/convites`, o botão na página de fluxo e o envio ao **criar processo** na web disparam `SendProcessSignatureInviteJob::dispatch(...)`. O job cria o token (hash + cifra), envia o mailable e só completa quando o **worker** processar a fila. Sem worker, os jobs ficam na tabela `jobs` e **não** há e-mail nem linha em `processo_assinatura_tokens` até processar.
 
-Se no passado você usou `QUEUE_CONNECTION=sync` **só** para “ver e-mail na hora”: para convites isso já não é necessário; `sync` global ainda faz **todos** os `dispatch()` normais rodarem inline (pode atrasar requests que enfileiram trabalho pesado).
+Em desenvolvimento você pode usar `QUEUE_CONNECTION=sync` no `.env` para executar jobs no mesmo processo PHP (sem `queue:work`), útil só em máquina local.
 
 ### Link público de storage (opcional)
 
@@ -92,7 +105,7 @@ php artisan db:seed
 php artisan serve
 ```
 
-E em outro terminal (opcional se você só usar convites/token neste projeto — ver nota do worker no Docker acima):
+E em outro terminal (**necessário** para convites se `QUEUE_CONNECTION` não for `sync`):
 
 ```bash
 php artisan queue:work --tries=1
@@ -139,10 +152,17 @@ Os arquivos em `datalake/` são pensados para serem **copiados para um storage e
 
 Campos principais no dataset (CSV/JSONL): identificação do processo (`processo_id`, `titulo`, `categoria`, `status`, timestamps), dados do signatário (`signatario_*`, `sort_order`), convites (`convite_*`, `convites_enviados`), resposta (`tipo_resposta`, `resposta_em`, `tempo_resposta_em_horas`, `justificativa_reprovacao`) e responsável (`responsible_user_*`).
 
+### Requisito 7 — o que o datalake faz “por baixo dos panos”
+
+1. **Comando** `php artisan datalake:export` (ver `app/Console/Commands/` + `App\Services\Datalake\ProcessAnalyticsFactExporter`) reconstrói a tabela **`processo_analytics_facts`**: uma linha por par **(processo, signatário)** que já esteve na pivô `cliente_processo`, enriquecida com métricas derivadas (contagem de tokens de convite, tempos, tipo de resposta, etc., conforme o exporter).
+2. **Arquivos** `JSONL` e `CSV` são gravados em `storage/app/private/datalake/` (disk `local` no Laravel 11+). Cada linha JSONL é um registro “wide” pronto para ingestão em ferramentas que preferem semi-estruturado; o CSV espelha colunas para análise em planilha ou cargas tabulares.
+3. **Uso futuro (BI / lakehouse):** copie os arquivos para um bucket (S3, GCS, ADLS) e configure um job (Airflow, dbt, Spark) para **append** diário; a tabela `processo_analytics_facts` pode ser lida diretamente por Metabase/PowerBI via conexão read-only ao Postgres, ou exportada de novo para Parquet numa fase seguinte (não incluída aqui).
+4. **Schedule:** `bootstrap/app.php` agenda `datalake:export` diariamente (03:15). Em produção, o cron do SO deve chamar `php artisan schedule:run` a cada minuto, conforme documentação Laravel.
+
 ## Auditoria (Req. 8)
 
 - **Tabela** `auditoria_eventos` (ação, subject/actor polimórficos, `before`/`after`/`meta` em JSON, IP e user-agent).
-- **APIs instrumentadas** (além do que já existia no fluxo de assinatura e convites): cadastro/edição/inativação de signatário; criação/edição/exclusão de processo; alteração de documento; vínculo/sync/remoção de signatários; disparo de convites (`POST /processo/{id}/convites`, processamento síncrono). Na web do fluxo de assinatura: `processo.link_assinatura_gerado`, `processo.link_assinatura_revelado`, além dos mesmos eventos já usados na API quando aplicável (`processo.convites_enfileirados`, `processo.signatarios_sincronizados`).
+- **APIs instrumentadas** (além do que já existia no fluxo de assinatura e convites): cadastro/edição/inativação de signatário; criação/edição/exclusão de processo; alteração de documento; vínculo/sync/remoção de signatários; **enfileiramento** de convites (`POST /processo/{id}/convites` → `processo.convites_enfileirados`). Na web do fluxo de assinatura: `processo.link_assinatura_gerado`, `processo.link_assinatura_revelado`, `processo.signatarios_sincronizados`, etc.
 - **Telas**: listagem global com filtros em `GET /auditoria`; no detalhe do processo (`/dashboard/processo/{id}`) continuam os eventos cujo **subject** é aquele processo, com atalho para a listagem filtrada por `processo_id`.
 
 ## Modelagem principal (resumo)
@@ -184,8 +204,8 @@ Política de status (transições) está centralizada em `app/Services/ProcessoS
 **Web (operador autenticado)** — visibilidade do fluxo sem depender só do Postman:
 
 - `GET /fluxo-assinatura` — lista processos em que você é o **responsável**
-- `GET /processos/{id}/fluxo-assinatura` — **reenviar convites** (processamento na hora), **gerar link manual**, **ajustar `sort_order`** (paralelo vs sequencial), tabela de tokens e respostas
-- `POST /processos/{id}/fluxo-assinatura/convites` — mesmo efeito do `POST /api/processo/{id}/convites` (síncrono: token + e-mail antes da resposta)
+- `GET /processos/{id}/fluxo-assinatura` — **reenviar convites** (enfileira jobs), **gerar link manual**, **ajustar `sort_order`** (paralelo vs sequencial), tabela de tokens e respostas
+- `POST /processos/{id}/fluxo-assinatura/convites` — mesmo efeito do `POST /api/processo/{id}/convites` (**202**, jobs na fila)
 - `POST /processos/{id}/fluxo-assinatura/link` — emite novo token e exibe a URL **uma vez** na tela
 - `POST /processos/{id}/fluxo-assinatura/tokens/{assinaturaToken}/revelar` — recupera a URL de um convite **válido** cujo token foi persistido com cifra (ver segurança abaixo)
 - `POST /processos/{id}/fluxo-assinatura/ordem` — sincroniza ordem dos signatários (equivalente conceitual ao `sync` da API)
@@ -210,7 +230,7 @@ Base típica: `http://localhost:8000/api`
 
 - `GET /painel` — atalhos (inclui card **Fluxo de assinatura** para Req. 3)
 - `GET /signatarios`, `GET /signatarios/create`, … — cadastro de signatários (Req. 1)
-- `GET /processos`, `GET /processos/criar` — listagem dos seus processos e **cadastro com documento opcional + signatários** (Req. 2); na listagem há atalho **Fluxo** por processo. Ao criar com signatários marcados, **convites são enviados na hora por padrão** (mesmo efeito que `POST /api/processo/{id}/convites`); dá para marcar _Não enviar convites agora_ no formulário. Os **tokens** já existem ao fim da requisição (não dependem de `queue:work` só para este fluxo).
+- `GET /processos`, `GET /processos/criar`, **`GET /processos/{id}/editar`**, **`PUT /processos/{id}`**, **`DELETE /processos/{id}`** — **CRUD web** de processos (Req. 2) só para o responsável; na listagem há **Fluxo**, **Editar** e **Excluir**. Ao criar com signatários, **convites são enfileirados por padrão** (como `POST /api/processo/{id}/convites`); dá para marcar _Não enviar convites agora_. **Tokens** aparecem após o worker processar os jobs (ou imediatamente com `QUEUE_CONNECTION=sync`).
 - Fluxo de assinatura (Req. 3): ver bullets em [Fluxo de assinatura (Req. 3)](#fluxo-de-assinatura-req-3) (rotas `/fluxo-assinatura` e `/processos/{id}/fluxo-assinatura`)
 
 ## Segurança do fluxo: convites e links (Req. 3)
@@ -229,12 +249,12 @@ Esta seção descreve como o projeto atende **boas práticas** comuns em documen
 
 - **Página pública de assinatura** (`/assinatura/...`): não usa sessão do operador; a **autorização** é o portador do **token** (modelo “quem tem o link”). Por isso TTL (`expires_at`) e **consumo único** (`consumed_at`) reduzem janela de abuso.
 - **Recuperação / gestão do fluxo na web:** rotas sob `auth` + verificação de **`responsible_user_id`** — só o **usuário responsável** pelo processo acessa convites, ordem dos signatários, **Exibir link** e geração manual.
-- **API** (`/api/...`): `auth:sanctum` + ownership conforme implementação de cada rota (evolução típica: policies dedicadas).
+- **API** (`/api/...`): `auth:sanctum` + **`ProcessoPolicy`** (`app/Policies/ProcessoPolicy.php`): listagem e operações de processo/signatários/convites/documento só para o **responsável**; `responsible_user_id` no `POST/PUT` deve ser o próprio usuário do token (validação + 403).
 
 ### Integridade e disponibilidade do fluxo
 
 - Validação do token via hash; rejeição se expirado ou já consumido.
-- **Convites:** `SendProcessSignatureInviteJob` é executado com `Bus::dispatchSync` (cria token + envia `ProcessSignatureInviteMail` na mesma requisição). **Trade-off:** se o SMTP demorar ou falhar, o utilizador espera na página/Postman até concluir ou dar erro; em produção com muitos signatários no mesmo processo, considere voltar a fila só para convites ou segmentar. O `QUEUE_CONNECTION` global (`database`, `redis`, `sync`) **não** altera este comportamento para convites — já é síncrono de propósito.
+- **Convites (assíncrono):** `SendProcessSignatureInviteJob` implementa `ShouldQueue` e é disparado com `dispatch()`. Dentro do job, o e-mail é enviado com `Mail::send` (mailable **não** enfileirado de novo, para evitar fila dupla). Garanta **worker** ativo ou `QUEUE_CONNECTION=sync` em dev.
 
 ### Rastreabilidade e auditoria (alinhado a “não repúdio” operacional)
 
@@ -252,7 +272,8 @@ Esta seção descreve como o projeto atende **boas práticas** comuns em documen
 Base típica: `http://localhost:8000`
 
 - `GET /dashboard`
-    - cards com totais por status
+    - cards com totais por status (**apenas processos em que você é o responsável**)
+    - gráficos (Chart.js): rosca e barras por status
     - tempo médio de aprovação (via histórico `approved`)
     - lista de processos **pendentes** há mais de **N** dias (parâmetro `overdue_days`)
     - filtros: `status`, `category`, `signatario_id`, `from`, `to`
@@ -265,7 +286,7 @@ Base típica: `http://localhost:8000`
 Base típica: `http://localhost:8000`
 
 - `GET /relatorios/status` (+ export `GET /relatorios/status.csv`)
-    - quantidade por status + percentual do total
+    - quantidade por status + percentual do total (**filtrado ao seu usuário responsável**)
 - `GET /relatorios/produtividade-signatarios?from=&to=` (+ export CSV)
     - total de aprovações/reprovações por signatário + tempo médio de resposta (primeira resposta por processo)
 - `GET /relatorios/processos-periodo?grain=day|week|month&from=&to=` (+ export CSV)
@@ -277,7 +298,7 @@ Base típica: `http://localhost:8000`
 
 Base típica: `http://localhost:8000`
 
-- `GET /analise?grain=day|week|month&from=&to=`
+- `GET /analise?grain=day|week|month&from=&to=` (dados **apenas dos seus processos** como responsável)
     - **Qual o tempo médio de aprovação?**
         - fórmula: média de \(`processo_status_histories.created_at - processos.created_at`\) para eventos com `to_status = approved`
     - **Quais signatários mais aprovam/reprovam?**
@@ -323,11 +344,11 @@ Requer **`Authorization: Bearer {token}`**.
 - `POST /processo/{id}/signatarios/sync` (substitui lista inteira)
 - `DELETE /processo/{id}/signatarios/{clienteId}`
 
-### Convites (e-mail na hora)
+### Convites (fila assíncrona)
 
 - `POST /processo/{id}/convites`
     - JSON opcional: `{ "ttl_hours": 72 }`
-    - Resposta **HTTP 200** com corpo `message` + `signatarios` (processamento síncrono; não depende de `queue:work` para este endpoint)
+    - Resposta **HTTP 202** — jobs enfileirados; corpo `message` + `signatarios`. Requer **`queue:work`** (ou `QUEUE_CONNECTION=sync` em dev).
 
 ### Fluxo web por token (navegador)
 
@@ -339,12 +360,12 @@ Rotas (fora de `/api`):
 
 ## Como testar o fluxo completo (sanity check)
 
-1. Subir app + db + worker da fila
+1. Subir app + db + **worker da fila** (ou `QUEUE_CONNECTION=sync` só em dev)
 2. **Registrar-se em `/`** (ou usar API com `User::factory` em ambiente de teste) para existir um `users.id` de responsável
 3. Criar signatários pela web em **`/signatarios`** ou via `POST /api/cliente` (com **Bearer** após `POST /api/login`)
-4. Criar processo pela web em **`/processos/criar`** ou via `POST /api/processo` com `responsible_user_id` = seu usuário (no Postman, use o `id` retornado em `/api/login`)
-5. Associar signatários ao processo (`POST /processo/{id}/signatarios`)
-6. Enviar convites (`POST /processo/{id}/convites` **ou** na web: `/processos/{id}/fluxo-assinatura` → enviar convites) — na hora, sem worker obrigatório para este passo
+4. Criar processo pela web em **`/processos/criar`** ou via `POST /api/processo` com `responsible_user_id` **igual** ao `id` do usuário retornado no login (senão **422/403**)
+5. Associar signatários ao processo (`POST /processo/{id}/signatarios`) se não tiver marcado na web
+6. Enviar convites (`POST /processo/{id}/convites` **ou** criar processo com signatários na web **ou** botão na página de fluxo) — resposta **202**; aguarde o worker processar
 7. Obter a URL de assinatura:
     - **Recomendado (operador logado):** `GET /processos/{id}/fluxo-assinatura` → na tabela de tokens, **Exibir link** (token válido e emitido após a migration com `invite_plain_ciphertext`), ou **Gerar link manual** para um novo token.
     - **Alternativa (dev):** se `MAIL_MAILER=log`, o corpo do e-mail também aparece em `storage/logs/laravel.log` dentro do container.
@@ -364,10 +385,10 @@ Rotas (fora de `/api`):
 ## Implementado
 
 - Req. **1** signatários
-- Req. **2** processos + upload + associação + status mínimos (via policy de transição)
-- Req. **3** convites assíncronos + token + aprovação/reprovação + registros + histórico
-- Req. **4** dashboard web + detalhe de processo
-- Req. **5** relatórios web + CSV
-- Req. **6** página `/analise` + camada de consultas analíticas (snapshot)
+- Req. **2** processos + **CRUD API e web** + upload + associação + status mínimos + **Laravel Policy** (`ProcessoPolicy`) restringindo ao responsável
+- Req. **3** convites **assíncronos** (job em fila, item 3.2 do PDF) + token + aprovação/reprovação + registros + histórico + **telas web de fluxo** (`/fluxo-assinatura`, recuperação controlada de link com cifra + auditoria; ver [Segurança do fluxo: convites e links](#segurança-do-fluxo-convites-e-links-req-3))
+- Req. **4** dashboard web (indicadores + **gráficos** Chart.js) + detalhe de processo
+- Req. **5** relatórios web + CSV (**escopo ao responsável logado**)
+- Req. **6** página `/analise` + camada de consultas analíticas (snapshot **escopo ao responsável**)
 - Req. **7** export consolidado “datalake-like” (`datalake:export` + tabela `processo_analytics_facts`)
 - Req. **8** auditoria ampliada nas rotas da API + listagem web `/auditoria` (filtros e paginação)

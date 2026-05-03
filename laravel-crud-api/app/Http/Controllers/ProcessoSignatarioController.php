@@ -13,6 +13,8 @@ class ProcessoSignatarioController extends Controller
 {
     public function index(Processo $processo)
     {
+        $this->authorize('manageSignatarios', $processo);
+
         $signatarios = $processo->signatarios()->get();
 
         return response()->json($signatarios);
@@ -20,6 +22,8 @@ class ProcessoSignatarioController extends Controller
 
     public function store(Request $request, Processo $processo)
     {
+        $this->authorize('manageSignatarios', $processo);
+
         $validator = Validator::make($request->all(), [
             'cliente_id' => 'required|integer|exists:clientes,id',
             'sort_order' => 'sometimes|integer|min:0',
@@ -63,6 +67,8 @@ class ProcessoSignatarioController extends Controller
 
     public function sync(Request $request, Processo $processo)
     {
+        $this->authorize('manageSignatarios', $processo);
+
         $validator = Validator::make($request->all(), [
             'signatarios' => 'required|array|min:1',
             'signatarios.*.cliente_id' => 'required|integer|distinct|exists:clientes,id',
@@ -117,6 +123,8 @@ class ProcessoSignatarioController extends Controller
 
     public function destroy(Request $request, Processo $processo, Cliente $cliente)
     {
+        $this->authorize('manageSignatarios', $processo);
+
         AuditLogger::log(
             acao: 'processo.signatario_desvinculado',
             subject: $processo,

@@ -6,13 +6,14 @@ use App\Jobs\SendProcessSignatureInviteJob;
 use App\Models\Processo;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Validator;
 
 class ProcessInvitationController extends Controller
 {
     public function enviar(Request $request, Processo $processo)
     {
+        $this->authorize('sendConvites', $processo);
+
         $validator = Validator::make($request->all(), [
             'ttl_hours' => 'sometimes|integer|min:1|max:720',
         ]);
@@ -35,7 +36,7 @@ class ProcessInvitationController extends Controller
         }
 
         foreach ($clienteIds as $clienteId) {
-            Bus::dispatchSync(new SendProcessSignatureInviteJob($processo->id, (int) $clienteId, $ttlHours));
+            SendProcessSignatureInviteJob::dispatch($processo->id, (int) $clienteId, $ttlHours);
         }
 
         AuditLogger::log(
@@ -53,8 +54,8 @@ class ProcessInvitationController extends Controller
         );
 
         return response()->json([
-            'message' => 'Convites enviados (processados na hora).',
+            'message' => 'Convites enfileirados.',
             'signatarios' => $clienteIds->count(),
-        ], 200);
+        ], 202);
     }
 }

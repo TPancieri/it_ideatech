@@ -14,7 +14,7 @@
     <p class="mb-1"><strong>{{ $processo->title }}</strong> <span class="badge text-bg-secondary">{{ $processo->status }}</span></p>
     <p class="text-muted small mb-4">Modo atual: {{ $modoFluxo }}. Signatários usam a página pública de assinatura (sem login). Convites por e-mail ficam com o mesmo link recuperável abaixo (token guardado só como hash + texto cifrado com a chave da aplicação).</p>
     <div class="alert alert-light border small mb-4 py-2">
-        <strong>Convites e e-mail:</strong> ao usar <em>Enviar convites</em> (ou ao criar o processo na web com signatários), o sistema processa <strong>na hora</strong> (<code>Bus::dispatchSync</code>): tokens e envio de e-mail ficam prontos antes de recarregar esta página. Um worker (<code>queue:work</code>) só é necessário para <strong>outros</strong> jobs que você vier a enfileirar no projeto.
+        <strong>Convites por fila (Req. 3):</strong> ao criar processo com signatários ou usar <em>Enviar convites</em>, o Laravel enfileira <code>SendProcessSignatureInviteJob</code> (assíncrono). Mantenha <code>php artisan queue:work</code> ativo quando <code>QUEUE_CONNECTION</code> for <code>database</code> ou <code>redis</code>. Só então esta tabela de tokens e os e-mails aparecem após o worker processar.
     </div>
 
     @if (session('assinatura_url_unica'))
@@ -53,7 +53,7 @@
             <div class="card shadow-sm h-100">
                 <div class="card-header fw-semibold">Enviar convites (fila)</div>
                 <div class="card-body">
-                    <p class="small text-muted">Equivale ao <code>POST /api/processo/{id}/convites</code>: um envio por signatário, <strong>na hora</strong> (token + e-mail antes de recarregar).</p>
+                    <p class="small text-muted">Equivale ao <code>POST /api/processo/{id}/convites</code>: um job por signatário na fila (token + e-mail quando o worker rodar).</p>
                     <form method="post" action="{{ route('fluxo.convites', $processo) }}" class="row g-2 align-items-end">
                         @csrf
                         <div class="col-auto">

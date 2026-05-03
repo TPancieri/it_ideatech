@@ -7,7 +7,7 @@
         <h1 class="h3 mb-0">Meus processos</h1>
         <a class="btn btn-primary btn-sm" href="{{ route('processos.create') }}">Novo processo</a>
     </div>
-    <p class="text-muted small">Listagem filtrada pelo seu usuário como responsável.</p>
+    <p class="text-muted small">Listagem filtrada pelo seu usuário como responsável. CRUD completo: criar, editar e excluir.</p>
 
     <div class="card shadow-sm">
         <div class="table-responsive">
@@ -33,6 +33,12 @@
                         <td class="d-flex flex-wrap gap-1">
                             <a class="btn btn-outline-secondary btn-sm" href="{{ route('dashboard.show', $p) }}">Detalhe</a>
                             <a class="btn btn-outline-primary btn-sm" href="{{ route('fluxo.show', $p) }}">Fluxo</a>
+                            <a class="btn btn-outline-dark btn-sm" href="{{ route('processos.edit', $p) }}">Editar</a>
+                            <form method="post" action="{{ route('processos.destroy', $p) }}" class="d-inline" onsubmit="return confirm('Excluir este processo?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Excluir</button>
+                            </form>
                         </td>
                     </tr>
                 @empty

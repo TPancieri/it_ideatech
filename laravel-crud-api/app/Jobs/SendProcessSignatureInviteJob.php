@@ -8,12 +8,18 @@ use App\Models\Processo;
 use App\Services\AuditLogger;
 use App\Services\ProcessSigningTokenService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
 class SendProcessSignatureInviteJob implements ShouldQueue
 {
+    use Dispatchable;
+    use InteractsWithQueue;
     use Queueable;
+    use SerializesModels;
 
     public function __construct(
         public int $processoId,

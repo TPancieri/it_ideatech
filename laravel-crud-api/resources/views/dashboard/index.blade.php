@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard — Processos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
 <body class="bg-light">
 <div class="container py-4">
@@ -69,6 +70,25 @@
                 <div class="card-body">
                     <div class="text-muted small">Cancelados</div>
                     <div class="fs4 fw-semibold">{{ $summary['canceled'] }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">Processos por status</div>
+                <div class="card-body" style="max-height: 320px;">
+                    <canvas id="chartStatus"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">Volume por status (barras)</div>
+                <div class="card-body" style="max-height: 320px;">
+                    <canvas id="chartStatusBar"></canvas>
                 </div>
             </div>
         </div>
@@ -230,10 +250,34 @@
             </div>
 
             <div class="text-muted small mt-2">
-                Mostrando até 200 registros (sem paginação).
+                Mostrando até 200 registros (sem paginação). Indicadores e gráficos consideram apenas processos em que você é o <strong>responsável</strong>.
             </div>
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const labels = ['Pendentes', 'Em aprovação', 'Aprovados', 'Reprovados', 'Cancelados'];
+    const data = [
+        {{ (int) $summary['pending'] }},
+        {{ (int) $summary['in_approval'] }},
+        {{ (int) $summary['approved'] }},
+        {{ (int) $summary['rejected'] }},
+        {{ (int) $summary['canceled'] }},
+    ];
+    const colors = ['#6c757d', '#0dcaf0', '#198754', '#dc3545', '#fd7e14'];
+    if (typeof Chart === 'undefined') return;
+    new Chart(document.getElementById('chartStatus'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 1 }] },
+        options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
+    });
+    new Chart(document.getElementById('chartStatusBar'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'Quantidade', data, backgroundColor: colors }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, maintainAspectRatio: false }
+    });
+});
+</script>
 </body>
 </html>

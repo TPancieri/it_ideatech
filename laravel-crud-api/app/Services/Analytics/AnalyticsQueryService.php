@@ -16,16 +16,10 @@ final class AnalyticsQueryService
     }
 
     /**
-     * Perguntas mínimas (Req. 6):
-     * - tempo médio de aprovação
-     * - signatários que mais aprovam/reprovam
-     * - categoria com maior volume
-     * - status com maior volume atual
-     * - processos criados por período
-     *
+     * @param  array<string,mixed>  $options
      * @return array<string,mixed>
      */
-    public function snapshot(array $options = []): array
+    public function snapshot(int $responsibleUserId, array $options = []): array
     {
         $grain = $options['grain'] ?? 'day';
         if (! in_array($grain, ['day', 'week', 'month'], true)) {
@@ -35,15 +29,15 @@ final class AnalyticsQueryService
         $from = isset($options['from']) && $options['from'] ? Carbon::parse($options['from']) : null;
         $to = isset($options['to']) && $options['to'] ? Carbon::parse($options['to']) : null;
 
-        $summary = $this->dashboard->summary();
+        $summary = $this->dashboard->summary($responsibleUserId);
 
-        $topSignatarios = $this->reports->productivityBySignatario($from, $to);
+        $topSignatarios = $this->reports->productivityBySignatario($responsibleUserId, $from, $to);
         $topSignatarios = array_slice($topSignatarios, 0, 10);
 
-        $categoryVolume = $this->categoryVolume();
-        $statusVolume = $this->statusVolume();
+        $categoryVolume = $this->categoryVolume($responsibleUserId);
+        $statusVolume = $this->statusVolume($responsibleUserId);
 
-        $createdByPeriod = $this->reports->processesByPeriod($grain, $from, $to);
+        $createdByPeriod = $this->reports->processesByPeriod($responsibleUserId, $grain, $from, $to);
 
         return [
             'avg_approval_hours' => $summary['avg_approval_hours'],
@@ -62,9 +56,10 @@ final class AnalyticsQueryService
     /**
      * @return array<int, array{category:string,count:int}>
      */
-    public function categoryVolume(): array
+    public function categoryVolume(int $responsibleUserId): array
     {
         $rows = DB::table('processos')
+            ->where('responsible_user_id', $responsibleUserId)
             ->selectRaw('category, count(*) as c')
             ->groupBy('category')
             ->orderByDesc('c')
@@ -79,9 +74,10 @@ final class AnalyticsQueryService
     /**
      * @return array<int, array{status:string,count:int}>
      */
-    public function statusVolume(): array
+    public function statusVolume(int $responsibleUserId): array
     {
         $rows = DB::table('processos')
+            ->where('responsible_user_id', $responsibleUserId)
             ->selectRaw('status, count(*) as c')
             ->groupBy('status')
             ->orderByDesc('c')
@@ -93,4 +89,3 @@ final class AnalyticsQueryService
         ])->values()->all();
     }
 }
-

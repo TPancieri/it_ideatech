@@ -10,9 +10,10 @@ final class ReportsQueryService
     /**
      * @return array<int, array{status:string,count:int,percent:float}>
      */
-    public function processesByStatus(): array
+    public function processesByStatus(int $responsibleUserId): array
     {
         $rows = DB::table('processos')
+            ->where('responsible_user_id', $responsibleUserId)
             ->selectRaw('status, count(*) as c')
             ->groupBy('status')
             ->orderBy('status')
@@ -37,11 +38,13 @@ final class ReportsQueryService
      *
      * @return array<int, array{cliente_id:int,name:?string,email:?string,approvals:int,rejections:int,avg_response_hours:?float}>
      */
-    public function productivityBySignatario(?Carbon $from = null, ?Carbon $to = null): array
+    public function productivityBySignatario(int $responsibleUserId, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $driver = DB::connection()->getDriverName();
 
         $counts = DB::table('processo_respostas as r')
+            ->join('processos as p', 'p.id', '=', 'r.processo_id')
+            ->where('p.responsible_user_id', $responsibleUserId)
             ->when($from, fn ($q) => $q->whereDate('r.created_at', '>=', $from->toDateString()))
             ->when($to, fn ($q) => $q->whereDate('r.created_at', '<=', $to->toDateString()))
             ->selectRaw('r.cliente_id')
@@ -51,6 +54,7 @@ final class ReportsQueryService
 
         $firstResponses = DB::table('processo_respostas as r')
             ->join('processos as p', 'p.id', '=', 'r.processo_id')
+            ->where('p.responsible_user_id', $responsibleUserId)
             ->when($from, fn ($q) => $q->whereDate('r.created_at', '>=', $from->toDateString()))
             ->when($to, fn ($q) => $q->whereDate('r.created_at', '<=', $to->toDateString()))
             ->selectRaw('r.cliente_id, r.processo_id, min(r.created_at) as first_at')
@@ -64,6 +68,7 @@ final class ReportsQueryService
         $avg = DB::query()
             ->fromSub($firstResponses, 'fr')
             ->join('processos as p', 'p.id', '=', 'fr.processo_id')
+            ->where('p.responsible_user_id', $responsibleUserId)
             ->selectRaw('fr.cliente_id')
             ->selectRaw($avgExpr.' as avg_seconds')
             ->groupBy('fr.cliente_id');
@@ -99,7 +104,7 @@ final class ReportsQueryService
     /**
      * @return array<int, array{period:string,created:int,concluded:int}>
      */
-    public function processesByPeriod(string $grain, ?Carbon $from = null, ?Carbon $to = null): array
+    public function processesByPeriod(int $responsibleUserId, string $grain, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $driver = DB::connection()->getDriverName();
 
@@ -119,6 +124,7 @@ final class ReportsQueryService
         };
 
         $created = DB::table('processos')
+            ->where('responsible_user_id', $responsibleUserId)
             ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from->toDateString()))
             ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to->toDateString()))
             ->selectRaw("$periodSql as period")
@@ -156,6 +162,7 @@ final class ReportsQueryService
         };
 
         $concluded = DB::table('processos')
+            ->where('responsible_user_id', $responsibleUserId)
             ->whereIn('status', ['approved', 'rejected'])
             ->whereRaw("$concludedExpr is not null")
             ->selectRaw("$concludedExpr as concluded_at")
@@ -204,10 +211,11 @@ final class ReportsQueryService
     /**
      * @return array<int, array{processo_id:int,title:string,categoria:string,signatario:string,email:?string,rejected_at:?string,justificativa:?string}>
      */
-    public function rejectionsReport(?Carbon $from = null, ?Carbon $to = null): array
+    public function rejectionsReport(int $responsibleUserId, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $q = DB::table('processo_respostas as r')
             ->join('processos as p', 'p.id', '=', 'r.processo_id')
+            ->where('p.responsible_user_id', $responsibleUserId)
             ->join('clientes as c', 'c.id', '=', 'r.cliente_id')
             ->where('r.tipo', '=', 'rejected')
             ->when($from, fn ($qq) => $qq->whereDate('r.created_at', '>=', $from->toDateString()))

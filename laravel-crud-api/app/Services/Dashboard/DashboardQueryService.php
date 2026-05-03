@@ -13,11 +13,13 @@ final class DashboardQueryService
     /**
      * @return array<string,int|float|null>
      */
-    public function summary(): array
+    public function summary(int $responsibleUserId): array
     {
-        $total = Processo::query()->count();
+        $base = Processo::query()->where('responsible_user_id', $responsibleUserId);
 
-        $byStatus = Processo::query()
+        $total = (clone $base)->count();
+
+        $byStatus = (clone $base)
             ->select(['status', DB::raw('count(*) as c')])
             ->groupBy('status')
             ->pluck('c', 'status');
@@ -28,7 +30,7 @@ final class DashboardQueryService
         $rejected = (int) ($byStatus['rejected'] ?? 0);
         $canceled = (int) ($byStatus['canceled'] ?? 0);
 
-        $avgApprovalHours = $this->averageApprovalHours();
+        $avgApprovalHours = $this->averageApprovalHours($responsibleUserId);
 
         return [
             'total_processos' => $total,
@@ -41,14 +43,13 @@ final class DashboardQueryService
         ];
     }
 
-    private function averageApprovalHours(): ?float
+    private function averageApprovalHours(int $responsibleUserId): ?float
     {
-        // Tempo médio entre criação do processo e momento em que virou "approved"
-        // (aproximação objetiva e auditável via histórico).
         $driver = DB::connection()->getDriverName();
 
         $avgSeconds = match ($driver) {
             'pgsql' => Processo::query()
+                ->where('processos.responsible_user_id', $responsibleUserId)
                 ->join('processo_status_histories as h', function ($join): void {
                     $join->on('h.processo_id', '=', 'processos.id')
                         ->where('h.to_status', '=', 'approved');
@@ -56,6 +57,7 @@ final class DashboardQueryService
                 ->selectRaw('avg(extract(epoch from (h.created_at - processos.created_at))) as avg_seconds')
                 ->value('avg_seconds'),
             default => Processo::query()
+                ->where('processos.responsible_user_id', $responsibleUserId)
                 ->join('processo_status_histories as h', function ($join): void {
                     $join->on('h.processo_id', '=', 'processos.id')
                         ->where('h.to_status', '=', 'approved');
@@ -74,11 +76,12 @@ final class DashboardQueryService
     /**
      * @return array<int, array<string,mixed>>
      */
-    public function overduePending(int $olderThanDays = 7): array
+    public function overduePending(int $responsibleUserId, int $olderThanDays = 7): array
     {
         $threshold = Carbon::now()->subDays($olderThanDays);
 
         return Processo::query()
+            ->where('responsible_user_id', $responsibleUserId)
             ->where('status', 'pending')
             ->where('created_at', '<', $threshold)
             ->orderByDesc('id')
@@ -97,9 +100,11 @@ final class DashboardQueryService
     /**
      * @param  array<string,mixed>  $filters
      */
-    public function filteredProcesses(array $filters): Builder
+    public function filteredProcesses(int $responsibleUserId, array $filters): Builder
     {
-        $q = Processo::query()->with(['responsibleUser:id,name,email']);
+        $q = Processo::query()
+            ->where('responsible_user_id', $responsibleUserId)
+            ->with(['responsibleUser:id,name,email']);
 
         if (! empty($filters['status'])) {
             $q->where('status', $filters['status']);
@@ -133,9 +138,10 @@ final class DashboardQueryService
     /**
      * @return array<int,string>
      */
-    public function categories(): array
+    public function categories(int $responsibleUserId): array
     {
         return Processo::query()
+            ->where('responsible_user_id', $responsibleUserId)
             ->select('category')
             ->distinct()
             ->orderBy('category')
@@ -146,9 +152,16 @@ final class DashboardQueryService
     /**
      * @return array<int,array<string,mixed>>
      */
-    public function signatariosOptions(): array
+    public function signatariosOptions(int $responsibleUserId): array
     {
         return Cliente::query()
+            ->whereExists(function ($q) use ($responsibleUserId): void {
+                $q->select(DB::raw(1))
+                    ->from('cliente_processo as cp')
+                    ->join('processos as pr', 'pr.id', '=', 'cp.processo_id')
+                    ->whereColumn('cp.cliente_id', 'clientes.id')
+                    ->where('pr.responsible_user_id', $responsibleUserId);
+            })
             ->orderBy('name')
             ->get(['id', 'name', 'email'])
             ->map(fn (Cliente $c) => [

@@ -55,4 +55,14 @@ final class ProcessoStatusPolicy
 
         return null;
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function statusesAllowedForForm(string $current): array
+    {
+        $next = self::TRANSITIONS[$current] ?? [];
+
+        return array_values(array_unique(array_merge([$current], $next)));
+    }
 }

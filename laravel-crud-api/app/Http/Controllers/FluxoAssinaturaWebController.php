@@ -10,7 +10,6 @@ use App\Services\AuditLogger;
 use App\Services\ProcessSigningTokenService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -84,7 +83,7 @@ final class FluxoAssinaturaWebController extends Controller
         }
 
         foreach ($clienteIds as $clienteId) {
-            Bus::dispatchSync(new SendProcessSignatureInviteJob($processo->id, (int) $clienteId, $ttlHours));
+            SendProcessSignatureInviteJob::dispatch($processo->id, (int) $clienteId, $ttlHours);
         }
 
         AuditLogger::log(
@@ -101,7 +100,7 @@ final class FluxoAssinaturaWebController extends Controller
             request: $request,
         );
 
-        return back()->with('success', 'Convites enviados na hora para '.$clienteIds->count().' signatário(s) (TTL '.$ttlHours.' h).');
+        return back()->with('success', 'Convites enfileirados para '.$clienteIds->count().' signatário(s) (TTL '.$ttlHours.' h). O worker da fila processará envio e tokens.');
     }
 
     public function linkGerar(

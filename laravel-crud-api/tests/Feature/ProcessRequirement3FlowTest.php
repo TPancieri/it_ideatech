@@ -1,13 +1,16 @@
 <?php
 
+use App\Jobs\SendProcessSignatureInviteJob;
 use App\Models\Cliente;
 use App\Models\Processo;
-use App\Models\ProcessoAssinaturaToken;
 use App\Models\User;
 use App\Services\ProcessSigningTokenService;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
-test('convites endpoint sends invite for all signatarios synchronously', function () {
+test('convites endpoint enqueues invite job for all signatarios', function () {
+    Queue::fake();
+
     $user = User::factory()->create();
     Sanctum::actingAs($user);
 
@@ -42,9 +45,9 @@ test('convites endpoint sends invite for all signatarios synchronously', functio
 
     $this->postJson("/api/processo/{$processo->id}/convites", [], [
         'Accept' => 'application/json',
-    ])->assertStatus(200);
+    ])->assertStatus(202);
 
-    expect(ProcessoAssinaturaToken::query()->where('processo_id', $processo->id)->count())->toBe(2);
+    Queue::assertPushed(SendProcessSignatureInviteJob::class, 2);
 });
 
 test('parallel approvals finalize process', function () {

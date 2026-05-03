@@ -16,7 +16,7 @@ class AnalyticsController extends Controller
             'to' => $request->string('to')->toString() ?: null,
         ];
 
-        $snapshot = $analytics->snapshot($options);
+        $snapshot = $analytics->snapshot((int) $request->user()->id, $options);
 
         return view('analytics.index', [
             'snapshot' => $snapshot,
